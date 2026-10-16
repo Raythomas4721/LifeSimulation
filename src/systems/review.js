@@ -1,6 +1,7 @@
 // 週日檢討與月結（DESIGN.md §5.4）
 import { PACING } from '../data/balance.js';
 import { calendarOf } from '../core/calendar.js';
+import { closeCard, pushCard } from './cards.js';
 
 // 每段期間開始時記下起點，期間內的收支由各系統累加
 export function startPeriod(state) {
@@ -20,7 +21,6 @@ export function startPeriod(state) {
 
 // 在當天結算完、state.day 加 1 之前呼叫
 export function checkReview(state) {
-  if (state.pending) return;
   const cal = calendarOf(state.day);
   const weekly = state.flags.reviews < PACING.weeklyReviews;
   const due = weekly
@@ -28,17 +28,18 @@ export function checkReview(state) {
     : calendarOf(state.day + 1).date === 1 && state.day - state.period.startDay + 1 >= PACING.minMonthlyDays;
   if (!due) return;
   state.flags.reviews += 1;
-  state.pending = {
+  pushCard(state, {
+    kind: 'review',
     type: weekly ? 'weekly' : 'monthly',
     number: state.flags.reviews,
     month: cal.month,
     report: buildReport(state),
-  };
+  });
 }
 
 export function resolveReview(state, schedule) {
   if (schedule) state.schedule = [...schedule];
-  state.pending = null;
+  closeCard(state);
   startPeriod(state);
 }
 

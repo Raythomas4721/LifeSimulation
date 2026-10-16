@@ -9,6 +9,10 @@ import { calendarOf, slotIndex } from './core/calendar.js';
 import { clearSave, readSave, toSave, writeSave } from './core/save.js';
 import { clampVitals } from './systems/work.js';
 import { resolveReview } from './systems/review.js';
+import { closeCard } from './systems/cards.js';
+import { chooseEvent, triggerEvent } from './systems/events.js';
+import { autoResolve } from './systems/auto.js';
+import { acceptPromotion, declinePromotion } from './systems/annual.js';
 import { mountApp } from './ui/app.js';
 import { runStartFlow } from './ui/start.js';
 import { createTutorial } from './ui/tutorial.js';
@@ -52,12 +56,42 @@ const ctl = {
     ctl.setSlot(index, nextActivity(game.state.schedule[index]));
   },
   resolveReview(schedule) {
+    if (game.state.pending?.kind !== 'review') return;
     if (schedule && (schedule.length !== 7 || !schedule.every(id => SLOT_IDS.includes(id)))) return;
     resolveReview(game.state, schedule);
     save();
   },
-  advanceDays(n) {
-    advance(n);
+  chooseEvent(index) {
+    chooseEvent(game.state, game.rng, index);
+    save();
+  },
+  closeCard() {
+    if (game.state.pending?.kind === 'review') return;
+    closeCard(game.state);
+    save();
+  },
+  // 通知卡片上的選項：升遷抉擇、出院後繼續
+  noticeAction(id) {
+    if (game.state.pending?.kind !== 'notice') return;
+    if (id === 'acceptPromotion') acceptPromotion(game.state);
+    if (id === 'declinePromotion') declinePromotion(game.state);
+    closeCard(game.state);
+    save();
+  },
+  triggerEvent(id) {
+    triggerEvent(game.state, id);
+    session.ui.refresh();
+  },
+  // 除錯跳轉；auto 時途中的卡片照預設選項處理，停在最後一天
+  advanceDays(n, auto = false) {
+    if (!auto) advance(n);
+    else {
+      for (let i = 0; i < n; i++) {
+        while (game.state.pending) autoResolve(game.state, game.rng);
+        advanceDay(game.state, game.rng);
+      }
+      save();
+    }
     session.ui.refresh();
   },
   changed() {

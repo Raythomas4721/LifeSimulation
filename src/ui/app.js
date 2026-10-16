@@ -2,7 +2,7 @@
 // data-bind / data-bar / data-pressed 每秒只改文字、寬度與按下狀態；data-block 內容有變化時才重畫那一塊
 import { calendarOf, slotIndex } from '../core/calendar.js';
 import * as header from './header.js';
-import * as review from './review.js';
+import * as cards from './cards.js';
 import * as home from './tabs/home.js';
 import * as career from './tabs/career.js';
 import * as menu from './tabs/menu.js';
@@ -23,11 +23,11 @@ export function mountApp(root, ctl) {
     <nav class="tabbar">
       ${TABS.map(t => `<button class="tabbar-btn" data-action="tab" data-value="${t.id}"><span aria-hidden="true">${t.icon}</span>${t.label}</button>`).join('')}
     </nav>
-    <div data-block="review"></div>`;
+    <div data-block="card"></div>`;
   const main = root.querySelector('#tab');
 
   const context = () => ({ state: ctl.state, progress: ctl.progress(), ctl });
-  const views = () => [header, review, tab.view];
+  const views = () => [header, cards, tab.view];
 
   function showTab(id) {
     tab = TABS.find(t => t.id === id) ?? TABS[0];

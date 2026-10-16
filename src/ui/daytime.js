@@ -1,14 +1,20 @@
 // 把「今天過了多少」換成畫面上的時刻、時段與天色
-import { DAY_START_HOUR, SKY, SLOT_PARTS, WEEKDAY_PARTS, WEEKEND_PARTS } from '../data/dayparts.js';
-import { calendarOf, isWeekend, slotIndex } from '../core/calendar.js';
+import { DAY_START_HOUR, LEAVE_PARTS, SKY, SLOT_PARTS, WEEKDAY_PARTS, WEEKEND_PARTS } from '../data/dayparts.js';
+import { calendarOf, isWeekend } from '../core/calendar.js';
+import { activityFor } from '../systems/schedule.js';
+import { leaveOn } from '../systems/statuses.js';
 
 const pad = n => String(n).padStart(2, '0');
 
-// 今天的時段清單（含每段長度），休息或加班依行程決定
+// 今天的時段清單（含每段長度）；請假或住院一整天，其他依行程（含強制加班）決定休息或加班
 export function partsOf(state) {
   const c = calendarOf(state.day);
   const weekend = isWeekend(c.weekday);
-  const activity = state.schedule[slotIndex(c.weekday)];
+  const leave = leaveOn(state, state.day);
+  if (leave) {
+    return [{ from: DAY_START_HOUR, to: DAY_START_HOUR + 24, activity: null, ...LEAVE_PARTS[leave.type] }];
+  }
+  const activity = activityFor(state, c.weekday);
   const raw = weekend ? WEEKEND_PARTS : WEEKDAY_PARTS;
   return raw.map((p, i) => {
     const to = raw[i + 1]?.from ?? DAY_START_HOUR + 24;

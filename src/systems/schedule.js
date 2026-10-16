@@ -1,9 +1,15 @@
 import { DAILY } from '../data/balance.js';
 import { slotIndex } from '../core/calendar.js';
 import { overtimePay } from './finance.js';
+import { forcedOn, leaveOn } from './statuses.js';
+import { workEffects } from './work.js';
 
-// M2 起，持續狀態（病假、住院、強制時段）會先覆寫這裡的結果
-export const activityFor = (state, weekday) => state.schedule[slotIndex(weekday)];
+// 優先順序：住院 > 病假 > 強制時段 > 行程範本（DESIGN.md §14.3）
+export function activityFor(state, weekday, day = state.day) {
+  if (leaveOn(state, day)) return 'rest';
+  const slot = slotIndex(weekday);
+  return forcedOn(state, day, slot)?.activity ?? state.schedule[slot];
+}
 
 export function applySlot(state, activity, weekend, multiplier) {
   const fx = slotEffects(activity, weekend);
@@ -20,6 +26,11 @@ export function applySlot(state, activity, weekend, multiplier) {
   }
 }
 
+export function applySleep(state) {
+  state.vitals.energy += DAILY.sleep.energy;
+  state.vitals.mood += DAILY.sleep.mood;
+}
+
 // 一個時段的效果；週末是一整天，效果加倍
 export function slotEffects(activity, weekend) {
   const fx = DAILY[activity];
@@ -33,7 +44,9 @@ export function weeklyForecast(state) {
   for (let i = 0; i < 7; i++) {
     const weekend = i >= 5;
     const activity = state.schedule[i];
-    const parts = weekend ? [slotEffects(activity, true)] : [DAILY.work, slotEffects(activity, false)];
+    const parts = weekend
+      ? [slotEffects(activity, true), DAILY.sleep]
+      : [workEffects(state), slotEffects(activity, false), DAILY.sleep];
     for (const fx of parts) {
       sum.energy += fx.energy;
       sum.mood += fx.mood;

@@ -8,8 +8,13 @@ export function performanceMultiplier(state) {
   return m;
 }
 
+// 平日上班的效果；職級越高越累（DESIGN.md §7.2）
+export function workEffects(state, level = state.job.level) {
+  return { ...DAILY.work, energy: DAILY.work.energy + (level - 1) * REVIEW.levelWorkEnergy };
+}
+
 export function applyWorkday(state, multiplier) {
-  const fx = DAILY.work;
+  const fx = workEffects(state);
   state.vitals.energy += fx.energy;
   state.vitals.mood += fx.mood;
   state.job.performance += fx.performance * multiplier;

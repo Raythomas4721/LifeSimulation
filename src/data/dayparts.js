@@ -21,6 +21,12 @@ export const SLOT_PARTS = {
   overtime: { weekday: '加班中', weekend: '週末加班中', short: '加班', place: '💻' },
 };
 
+// 請病假、住院時一整天都是這一段
+export const LEAVE_PARTS = {
+  sickLeave: { kind: 'sick', label: '請病假在家休息', short: '病假', place: '🛌' },
+  hospital: { kind: 'hospital', label: '住院中', short: '住院', place: '🏥' },
+};
+
 // 天色：依幾點決定場景背景與時鐘圖示
 export const SKY = [
   { from: 5, sky: 'dawn', icon: '🌅' },

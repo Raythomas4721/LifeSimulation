@@ -1,11 +1,12 @@
 // 「今天」分頁：主畫面就是操作的地方（DESIGN.md §13）
-import { THRESHOLDS } from '../../data/balance.js';
+import { DAILY, THRESHOLDS } from '../../data/balance.js';
 import { SLOT_SHORT } from '../../data/schedule.js';
 import { THOUGHTS } from '../../data/thoughts.js';
 import { calendarOf, isWeekend, slotIndex } from '../../core/calendar.js';
 import { overtimePay } from '../../systems/finance.js';
 import { slotEffects, weeklyForecast } from '../../systems/schedule.js';
-import { esc, formatNumber, formatSigned } from '../format.js';
+import { forcedOn, leaveOn } from '../../systems/statuses.js';
+import { esc, formatDate, formatNumber, formatSigned } from '../format.js';
 import { activityOf, logText, milestoneText } from '../text.js';
 import { timeOf } from '../daytime.js';
 
@@ -28,6 +29,8 @@ export function render() {
           <small data-bind="overtimeFx"></small>
         </button>
       </div>
+      <p class="note" data-bind="tonightNote"></p>
+      <p class="muted" data-bind="sleepNote"></p>
       <p class="muted">會記在每週行程裡，之後每週的這一天都照這樣過。</p>
     </section>
     <section class="card card-tight" data-tour="week">
@@ -54,6 +57,17 @@ export const binds = {
     const t = today(state);
     return t.weekend ? `今天（週${SLOT_SHORT[t.slot]}）要做什麼？` : '今晚要做什麼？';
   },
+  // 請假或被指派加班時，今天實際做的事和行程不同，要講清楚
+  tonightNote: ({ state }) => {
+    const leave = leaveOn(state, state.day);
+    const until = s => formatDate(s.endDay - 1, { weekday: false });
+    if (leave?.type === 'hospital') return `🏥 住院中，到 ${until(leave)} 都不能工作。`;
+    if (leave) return `🛌 請病假中，到 ${until(leave)} 在家休息。`;
+    const forced = forcedOn(state, state.day, today(state).slot);
+    if (forced) return `⚠️ 今晚被指派${activityOf(forced.activity).label}（到 ${until(forced)}），行程的選擇之後才生效。`;
+    return '';
+  },
+  sleepNote: () => `💤 不管選哪個，每晚睡覺體力 ${formatSigned(DAILY.sleep.energy)}；上班一天體力 ${formatSigned(DAILY.work.energy)} 起跳。`,
   tonightRest: ({ state }) => today(state).activity === 'rest',
   tonightOvertime: ({ state }) => today(state).activity === 'overtime',
   restFx: ({ state }) => fxText(slotEffects('rest', today(state).weekend)),

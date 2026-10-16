@@ -1,7 +1,10 @@
 // 除錯面板（DESIGN.md §14.6）：網址加 ?debug 才出現，所有跳轉都經過 advanceDay
 import { TIME } from '../data/balance.js';
 import { daysUntil } from '../core/calendar.js';
+import { EVENT_LIST } from '../data/events.js';
 import { esc } from './format.js';
+
+let autoCards = false;
 
 const STAT_FIELDS = [
   { key: 'money', label: '存款', get: s => s.money, set: (s, v) => (s.money = v) },
@@ -43,6 +46,11 @@ export function mountDebug(ctl, tabbar) {
         <button class="btn" data-debug="nextMonth">下個月 1 日</button>
         <button class="btn" data-debug="nextYear">下一個 1/1</button>
       </div>
+      <label class="debug-check"><input type="checkbox" id="debug-auto"${autoCards ? ' checked' : ''}> 跳轉時自動處理途中的卡片（照預設選項）</label>
+      <div class="debug-row">
+        <label class="debug-seed">觸發事件<select class="input" id="debug-event">${EVENT_LIST.map(e => `<option value="${e.id}">${e.title}</option>`).join('')}</select></label>
+        <button class="btn" data-debug="trigger">觸發</button>
+      </div>
       <div class="debug-stats">
         ${STAT_FIELDS.map(f => `<label>${f.label}<input class="input" type="number" data-stat="${f.key}" value="${Math.round(f.get(s))}"></label>`).join('')}
       </div>
@@ -58,12 +66,14 @@ export function mountDebug(ctl, tabbar) {
     const btn = e.target.closest('[data-debug]');
     if (!btn) return;
     const day = ctl.state.day;
+    autoCards = panel.querySelector('#debug-auto').checked;
     switch (btn.dataset.debug) {
       case 'fast': ctl.setSpeed(TIME.debugSpeed); break;
       case 'normal': ctl.setSpeed(1); break;
-      case 'days': ctl.advanceDays(Number(btn.dataset.n)); break;
-      case 'nextMonth': ctl.advanceDays(daysUntil(day, c => c.date === 1)); break;
-      case 'nextYear': ctl.advanceDays(daysUntil(day, c => c.month === 1 && c.date === 1)); break;
+      case 'days': ctl.advanceDays(Number(btn.dataset.n), autoCards); break;
+      case 'nextMonth': ctl.advanceDays(daysUntil(day, c => c.date === 1), autoCards); break;
+      case 'nextYear': ctl.advanceDays(daysUntil(day, c => c.month === 1 && c.date === 1), autoCards); break;
+      case 'trigger': ctl.triggerEvent(panel.querySelector('#debug-event').value); break;
       case 'applyStats':
         for (const f of STAT_FIELDS) {
           const v = Number(panel.querySelector(`[data-stat="${f.key}"]`).value);

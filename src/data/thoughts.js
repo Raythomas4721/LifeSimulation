@@ -1,7 +1,9 @@
 // 主角台詞（DESIGN.md §13.3）
 // urgent 的優先，符合就只說這組；其他符合的台詞混在一起輪流說
-// c：{ kind（目前時段：commute／work／slot／sleep）, weekend, overtimeNow }
+// c：{ kind（目前時段：commute／work／slot／sleep／sick／hospital）, weekend, overtimeNow }
 export const THOUGHTS = [
+  { urgent: true, when: (s, c) => c.kind === 'hospital', lines: ['好想出院…', '醫院的飯好清淡…', '以後要好好照顧自己。'] },
+  { urgent: true, when: (s, c) => c.kind === 'sick', lines: ['咳咳…', '好好休息吧…', '躺著追劇也不錯。'] },
   { urgent: true, when: (s, c) => c.kind === 'sleep', lines: ['Zzz…', 'Zzz…呼…'] },
   { urgent: true, when: s => s.vitals.energy < 20, lines: ['今晚想早點睡…', '眼皮好重…', '咖啡已經沒用了…'] },
   { urgent: true, when: s => s.vitals.mood < 20, lines: ['好想放假…', '什麼時候才有連假…', '不想上班…'] },

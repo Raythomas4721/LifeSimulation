@@ -6,8 +6,9 @@ export const dailyWage = state => Math.round(state.job.salary / FINANCE.daysPerM
 export const overtimePay = (state, weekend) =>
   Math.round(dailyWage(state) * FINANCE.overtimePayRate[weekend ? 'weekend' : 'weekday']);
 
-export function applyDailyIncome(state) {
-  const wage = dailyWage(state);
+// sickPay：今天是平日又在請假時，日薪要乘上的比例（半薪或無薪）
+export function applyDailyIncome(state, sickPay = 1) {
+  const wage = Math.round(dailyWage(state) * sickPay);
   state.money += wage;
   state.period.income += wage;
 }

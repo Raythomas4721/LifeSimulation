@@ -1,6 +1,6 @@
 // 存讀檔（DESIGN.md §14.4）。格式變動時把 SAVE_VERSION 加 1，並在 MIGRATIONS 補上舊版升級函式
 const KEY = 'lifesim.save';
-export const SAVE_VERSION = 2;
+export const SAVE_VERSION = 3;
 
 // 遷移函式要自給自足，不引用現在的遊戲程式，舊存檔才不會因為程式改動而升級失敗
 const MIGRATIONS = {
@@ -27,6 +27,23 @@ const MIGRATIONS = {
         },
         pending: null,
         settings: { lastSpeed: 1, ...s.settings },
+      },
+    };
+  },
+  // v3：事件、傷病、年度考核、卡片佇列
+  2: save => {
+    const s = save.state;
+    return {
+      ...save,
+      version: 3,
+      state: {
+        ...s,
+        job: { ...s.job, levelStartDay: s.job.startDay, reviews: [] },
+        health: { collapses: 0, sickDays: 0 },
+        events: { last: {}, counts: {} },
+        stats: { collapses: 0, hospitalStays: 0, ...s.stats },
+        pending: s.pending ? { kind: 'review', ...s.pending } : null,
+        queue: [],
       },
     };
   },

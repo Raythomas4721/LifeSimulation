@@ -335,15 +335,15 @@ h3 { margin: 16px 0 8px; font-size: 16px; }
   inset: 0;
   z-index: 50;
   display: flex;
-  align-items: flex-end;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
   overflow: auto;
   background: rgba(0, 0, 0, 0.5);
 }
 .sheet {
   width: 100%;
   max-width: 480px;
-  margin: 0;
+  margin: auto 0 0; /* 靠下對齊；卡片比畫面高時改成可以往上捲 */
   padding-bottom: calc(16px + env(safe-area-inset-bottom));
   animation: slide-up 0.25s steps(5);
 }
@@ -410,3 +410,15 @@ h3 { margin: 16px 0 8px; font-size: 16px; }
 .debug-stats label, .debug-seed { display: flex; flex-direction: column; font-size: 13px; }
 .debug-seed { flex: 1; }
 .debug pre { max-height: 240px; overflow: auto; font-size: 11px; }
+
+/* 事件與通知卡片 */
+.card-choices { margin-top: 4px; }
+.card-choices .btn-block { margin-top: 10px; text-align: left; }
+.changes { margin: 12px 0 0; padding: 10px 12px 10px 28px; border: 2px dashed var(--ink); font-weight: 700; }
+.speech p { margin: 0 0 4px; }
+.speech p:last-child { margin-bottom: 0; }
+.debug-check { display: flex; align-items: center; gap: 8px; min-height: 44px; margin-top: 10px; font-size: 14px; }
+.debug-check input { width: 22px; height: 22px; }
+.note { margin: 0 0 8px; padding: 6px 10px; border: 2px solid var(--ink); background: var(--warn-bg); font-size: 14px; font-weight: 700; }
+.note:empty { display: none; }
+.choice-btn small { display: block; margin-top: 2px; font-size: 12px; font-weight: 400; }
