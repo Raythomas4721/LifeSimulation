@@ -1,5 +1,6 @@
 // 從下方滑出的卡片：檢討與月結、事件、通知。state.pending 有值時顯示，時間暫停
 import { EVENTS_BY_ID } from '../data/events.js';
+import { CAST_BY_ID } from '../data/cast.js';
 import { NOTICES } from '../data/notices.js';
 import { REVIEW } from '../data/balance.js';
 import { workEffects } from '../systems/work.js';
@@ -25,10 +26,17 @@ export const blocks = {
   },
 };
 
+// 有固定班底的事件，標題上方顯示是誰
+const castTag = e => {
+  const c = CAST_BY_ID[e.cast];
+  return c ? `<p class="cast-tag">${c.emoji} ${c.name}<small>${c.role}</small></p>` : '';
+};
+
 function eventCard(p) {
   const e = EVENTS_BY_ID[p.id];
   if (p.step === 'choose') {
     return `
+      ${castTag(e)}
       <h2 id="card-title">${esc(e.title)}</h2>
       <p class="speech">${esc(e.text)}</p>
       <div class="card-choices">

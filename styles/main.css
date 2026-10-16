@@ -422,3 +422,11 @@ h3 { margin: 16px 0 8px; font-size: 16px; }
 .note { margin: 0 0 8px; padding: 6px 10px; border: 2px solid var(--ink); background: var(--warn-bg); font-size: 14px; font-weight: 700; }
 .note:empty { display: none; }
 .choice-btn small { display: block; margin-top: 2px; font-size: 12px; font-weight: 400; }
+
+/* 固定班底 */
+.cast-tag { margin: 0 0 4px; font-size: 14px; font-weight: 700; }
+.cast-tag small, .cast-list small { margin-left: 6px; color: var(--muted); font-weight: 400; font-size: 12px; }
+.cast-list { margin: 0; padding: 0; list-style: none; font-size: 14px; }
+.cast-list li { display: flex; gap: 10px; padding: 8px 0; border-bottom: 1px dashed var(--muted); }
+.cast-list li:last-child { border-bottom: 0; }
+.cast-emoji { font-size: 28px; line-height: 1.2; }

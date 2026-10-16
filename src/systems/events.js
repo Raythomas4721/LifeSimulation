@@ -20,11 +20,22 @@ const cooledDown = (state, e) => {
 
 const weightOf = (e, state, c) => (typeof e.weight === 'function' ? e.weight(state, c) : e.weight ?? EVENTS.weight);
 
-// 在新的一天開始時呼叫；已經有卡片在等時不再疊事件
+// 劇情事件（有 on 的）：on.day 是開局後第幾天、只出現一次；on.month + on.date 是每年那天，once 時只出現一次
+function scriptedToday(state, c) {
+  return EVENT_LIST.filter(e => {
+    if (!e.on) return false;
+    const seen = state.events.counts[e.id] > 0;
+    const hit = e.on.day != null ? state.day === e.on.day : c.month === e.on.month && c.date === e.on.date;
+    return hit && !((e.on.day != null || e.once) && seen) && (!e.condition || e.condition(state, c));
+  });
+}
+
+// 在新的一天開始時呼叫：劇情事件一定出現（卡片排隊）；隨機事件在已經有卡片在等時不再疊
 export function rollEvent(state, rng) {
-  if (state.pending || rng.next() >= EVENTS.dailyChance) return;
   const c = eventCalendar(state.day);
-  const pool = EVENT_LIST.filter(e => !e.followUp && cooledDown(state, e) && (!e.condition || e.condition(state, c)));
+  for (const e of scriptedToday(state, c)) triggerEvent(state, e.id);
+  if (state.pending || rng.next() >= EVENTS.dailyChance) return;
+  const pool = EVENT_LIST.filter(e => !e.followUp && !e.on && cooledDown(state, e) && (!e.condition || e.condition(state, c)));
   if (!pool.length) return;
   const weights = pool.map(e => weightOf(e, state, c));
   let r = rng.next() * weights.reduce((a, b) => a + b, 0);
@@ -78,8 +89,9 @@ export function chooseEvent(state, rng, index) {
   }
   if (choice.forceSlots) {
     const f = choice.forceSlots;
-    addStatus(state, { type: 'forceSlot', startDay: state.day, endDay: state.day + f.weeks * 7, activity: f.activity, slots: f.slots, source: event.id });
-    notes.push({ kind: 'forceSlot', endDay: state.day + f.weeks * 7, ...f });
+    const endDay = state.day + (f.days ?? f.weeks * 7);
+    addStatus(state, { type: 'forceSlot', startDay: state.day, endDay, activity: f.activity, slots: f.slots, source: event.id });
+    notes.push({ kind: 'forceSlot', endDay, ...f });
   }
   if (choice.sickLeave) {
     startSickLeave(state, state.day, choice.sickLeave);

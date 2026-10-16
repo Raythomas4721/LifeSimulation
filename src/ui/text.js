@@ -45,8 +45,10 @@ export function noteText(note) {
   if (note.kind === 'delayed') return `明天：${deltaItems(note.effects).join('、')}`;
   if (note.kind === 'sickLeave') return `請病假 ${note.days} 天，這幾天在家休息、領半薪`;
   if (note.kind === 'forceSlot') {
-    const days = note.slots.map(i => `週${SLOT_SHORT[i]}`).join('、');
-    return `到 ${formatDate(note.endDay - 1, { weekday: false })} 為止，${days}晚上要${activityOf(note.activity).label}`;
+    const label = activityOf(note.activity).label;
+    if (note.days === 1) return `今晚要${label}`;
+    const days = note.slots ? note.slots.map(i => `週${SLOT_SHORT[i]}`).join('、') : '每天';
+    return `到 ${formatDate(note.endDay - 1, { weekday: false })} 為止，${days}晚上要${label}`;
   }
   return '';
 }

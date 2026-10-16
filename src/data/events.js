@@ -1,6 +1,8 @@
-// 事件資料（DESIGN.md §10）。邏輯程式不寫死任何事件，要加事件只改這支檔案
+// 事件資料（DESIGN.md §10）。邏輯程式不寫死任何事件，要加事件只改 src/data/ 底下的事件檔
+import { FIRST_YEAR_EVENTS } from './events-first-year.js';
 // 事件在一天開始時（06:00）跳出，所以文字用「今天」「昨晚」的角度寫
 // c：今天的日曆 { month, date, weekday（0 = 週日）, weekend }
+// 欄位：on（劇情事件的日子，見 events-first-year.js）、cast（固定班底，見 cast.js）
 // 選項欄位：effects、chance { p, effects, then, result, otherwise, otherwiseResult }、
 //           delayed { days, effects }、forceSlots { activity, weeks, slots }、sickLeave、result、default
 // effects 可用：money、energy、mood、performance；illness: 'collapse' 直接病倒
@@ -11,29 +13,32 @@ const weekday = (s, c) => !c.weekend;
 export const EVENT_LIST = [
   {
     id: 'line_at_midnight',
+    cast: 'boss',
     title: '深夜的 LINE',
-    text: '昨晚 11 點，主管在工作群組 @ 你：「明天早上要的資料好了嗎？」',
+    text: '昨晚 11 點，王經理在工作群組 @ 你：「明天早上要的資料好了嗎？」',
     condition: weekday,
     choices: [
-      { text: '馬上回覆並開電腦', effects: { performance: 2, energy: -10, mood: -8 }, result: '主管回了一個讚。' },
+      { text: '馬上回覆並開電腦', effects: { performance: 2, energy: -10, mood: -8 }, result: '王經理回了一個讚。' },
       { text: '已讀，明天再說', effects: { mood: -2 }, chance: { p: 0.3, then: 'boss_unhappy' }, result: '應該沒事吧…', default: true },
       { text: '裝作沒看到', effects: { performance: -2, mood: 3 }, result: '眼不見為淨。' },
     ],
   },
   {
     id: 'simple_change',
+    cast: 'boss',
     title: '「簡單改一下就好」',
-    text: '主管拿著需求單走過來：「這個簡單改一下就好，明天要。」',
+    text: '王經理拿著需求單走過來：「這個簡單改一下就好，明天要。」',
     condition: weekday,
     choices: [
       { text: '熬夜改完', effects: { performance: 3, energy: -18, mood: -8 }, result: '改到半夜兩點，總算交出去了。' },
-      { text: '協商時程', effects: { mood: 1 }, result: '主管勉強同意延到後天。', default: true },
+      { text: '協商時程', effects: { mood: 1 }, result: '王經理勉強同意延到後天。', default: true },
     ],
   },
   {
     id: 'coworker_quit',
+    cast: 'boss',
     title: '同事離職了',
-    text: '隔壁同事今天提離職，他手上的工作要分給你。',
+    text: '隔壁組的同事今天提離職，王經理說他手上的工作要分給你。',
     condition: weekday,
     choices: [
       {
@@ -42,13 +47,14 @@ export const EVENT_LIST = [
         forceSlots: { activity: 'overtime', weeks: 1, slots: [1, 3] },
         result: '工作量一下子變多了。',
       },
-      { text: '婉拒', effects: { performance: -1, mood: -2 }, result: '主管臉色不太好看。', default: true },
+      { text: '婉拒', effects: { performance: -1, mood: -2 }, result: '王經理臉色不太好看。', default: true },
     ],
   },
   {
     id: 'lunch_invite',
+    cast: 'xiaomei',
     title: '同事揪午餐',
-    text: '「中午一起去吃那家新開的拉麵？」',
+    text: '小美：「中午一起去吃那家新開的拉麵？」',
     condition: weekday,
     choices: [
       { text: '一起去', effects: { money: -250, mood: 5 }, result: '拉麵很好吃，聊得很開心。' },
@@ -67,8 +73,9 @@ export const EVENT_LIST = [
   },
   {
     id: 'boss_blame',
-    title: '主管甩鍋',
-    text: '會議上，主管把專案延誤說成是你的問題。',
+    cast: 'boss',
+    title: '王經理甩鍋',
+    text: '會議上，王經理把專案延誤說成是你的問題。',
     condition: weekday,
     choices: [
       { text: '吞下去', effects: { mood: -10 }, result: '回到座位，默默把這筆記在心裡。', default: true },
@@ -77,9 +84,9 @@ export const EVENT_LIST = [
         chance: {
           p: 0.5,
           effects: { performance: 2, mood: 5 },
-          result: '你拿出紀錄，主管只好改口。',
+          result: '你拿出紀錄，王經理只好改口。',
           otherwise: { performance: -2, mood: -5 },
-          otherwiseResult: '氣氛很僵，主管記住你了。',
+          otherwiseResult: '氣氛很僵，王經理記住你了。',
         },
       },
     ],
@@ -105,8 +112,9 @@ export const EVENT_LIST = [
   },
   {
     id: 'friday_drink',
+    cast: 'akai',
     title: '下班後有人揪',
-    text: '同事約今天下班去熱炒店喝一杯。',
+    text: '阿凱：「今天週五，下班去熱炒店喝一杯？」',
     condition: (s, c) => c.weekday === 5,
     choices: [
       { text: '去！', effects: { money: -600, mood: 10 }, delayed: { days: 1, effects: { energy: -15 } }, result: '喝得很開心，明天大概會很累。' },
@@ -115,8 +123,9 @@ export const EVENT_LIST = [
   },
   {
     id: 'new_project',
+    cast: 'boss',
     title: '新專案',
-    text: '主管指派你負責一個新專案，接下來會很忙。',
+    text: '王經理指派你負責一個新專案，接下來會很忙。',
     condition: weekday,
     choices: [
       {
@@ -125,7 +134,7 @@ export const EVENT_LIST = [
         forceSlots: { activity: 'overtime', weeks: 2, slots: [0, 2, 4] },
         result: '是個表現的好機會。',
       },
-      { text: '推掉', effects: { performance: -1 }, result: '主管轉頭找了別人。', default: true },
+      { text: '推掉', effects: { performance: -1 }, result: '王經理轉頭找了別人。', default: true },
     ],
   },
   {
@@ -140,8 +149,9 @@ export const EVENT_LIST = [
   },
   {
     id: 'drink_order',
+    cast: 'xiaomei',
     title: '揪團訂飲料',
-    text: '下午三點，群組裡有人揪團訂飲料。',
+    text: '下午三點，小美在群組揪團訂飲料。',
     condition: weekday,
     choices: [
       { text: '跟一杯', effects: { money: -60, mood: 3 }, result: '半糖少冰，續命成功。' },
@@ -150,8 +160,9 @@ export const EVENT_LIST = [
   },
   {
     id: 'last_minute_meeting',
+    cast: 'boss',
     title: '下班前的會議',
-    text: '下班前 5 分鐘，主管說：「大家來開個短會。」',
+    text: '下班前 5 分鐘，王經理說：「大家來開個短會。」',
     condition: weekday,
     choices: [
       { text: '留下來', effects: { performance: 1, energy: -6, mood: -5 }, result: '「短會」開了一個小時。', default: true },
@@ -160,8 +171,9 @@ export const EVENT_LIST = [
   },
   {
     id: 'voluntary_overtime',
+    cast: 'boss',
     title: '「大家都自願留下來」',
-    text: '主管說：「這週大家就自願留下來，把案子趕完吧。」',
+    text: '王經理說：「這週大家就自願留下來，把案子趕完吧。」',
     condition: weekday,
     choices: [
       { text: '留下', effects: { performance: 2, energy: -12, mood: -6 }, result: '自願的，所以沒有加班費…' },
@@ -170,8 +182,9 @@ export const EVENT_LIST = [
   },
   {
     id: 'wedding_invite',
+    cast: 'xiaomei',
     title: '收到喜帖',
-    text: '同事要結婚了，桌上放著一張紅色喜帖。',
+    text: '小美要結婚了！桌上放著一張紅色喜帖。',
     choices: [
       { text: '出席', effects: { money: -2000, mood: 6 }, result: '婚禮很感人，菜也很好吃。', default: true },
       { text: '禮到人不到', effects: { money: -1200 }, result: '請同事幫忙帶紅包。' },
@@ -194,7 +207,7 @@ export const EVENT_LIST = [
     condition: weekday,
     choices: [
       { text: '用跑的', effects: { energy: -6 }, result: '氣喘吁吁，剛好趕上打卡。' },
-      { text: '傳訊息說會晚到', effects: { performance: -1 }, result: '主管回了一個「OK」。', default: true },
+      { text: '傳訊息說會晚到', effects: { performance: -1 }, result: '王經理回了一個「OK」。', default: true },
     ],
   },
   {
@@ -209,6 +222,7 @@ export const EVENT_LIST = [
   },
   {
     id: 'parents_call',
+    cast: 'mom',
     title: '媽媽的電話',
     text: '媽媽打電話來：「什麼時候回家？」',
     choices: [
@@ -247,14 +261,17 @@ export const EVENT_LIST = [
   },
   {
     id: 'boss_unhappy',
-    title: '主管不太高興',
-    text: '主管把你叫進會議室：「昨天的訊息怎麼沒回？」',
+    cast: 'boss',
+    title: '王經理不太高興',
+    text: '王經理把你叫進會議室：「昨天的訊息怎麼沒回？」',
     followUp: true, // 只由 line_at_midnight 觸發
     choices: [
-      { text: '道歉，馬上補交', effects: { performance: 1, mood: -5 }, result: '主管：「下次早點回。」', default: true },
-      { text: '裝傻', effects: { performance: -2 }, result: '主管嘆了一口氣。' },
+      { text: '道歉，馬上補交', effects: { performance: 1, mood: -5 }, result: '王經理：「下次早點回。」', default: true },
+      { text: '裝傻', effects: { performance: -2 }, result: '王經理嘆了一口氣。' },
     ],
   },
 ];
+
+EVENT_LIST.push(...FIRST_YEAR_EVENTS);
 
 export const EVENTS_BY_ID = Object.fromEntries(EVENT_LIST.map(e => [e.id, e]));
