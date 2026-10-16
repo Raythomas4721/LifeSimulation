@@ -128,6 +128,7 @@ export function chooseEvent(state, rng, index) {
     addStatus(state, { type: 'forceSlot', startDay: state.day, endDay, activity: f.activity, slots: f.slots, source: event.id });
     notes.push({ kind: 'forceSlot', endDay, ...f });
   }
+  if (choice.crisis) Object.assign(state.crisis, choice.crisis); // 例如被約談後進入績效改善計畫
   if (choice.sickLeave) {
     startSickLeave(state, state.day, choice.sickLeave);
     notes.push({ kind: 'sickLeave', days: choice.sickLeave });

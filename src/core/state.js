@@ -17,6 +17,7 @@ export function createState(name) {
     study: { course: null, done: {}, certs: {} }, // 目前的課程、每門課結業的次數、證照與考到的日子（§9.1）
     schedule: Array(7).fill('rest'),
     statuses: [], // 病假、住院、強制時段、延遲效果（DESIGN.md §14.3）
+    crisis: { pip: false, debtMonths: 0, debtPlan: false }, // 績效改善計畫、連續負債幾個月、債務協商（§7.3、§11）
     health: { collapses: 0, sickDays: 0 }, // 當年度的病倒次數與病假天數，每年 1/1 歸零
     events: { last: {}, counts: {} }, // 每個事件上次出現的日子與次數
     stats: { workDays: 0, overtimeSlots: 0, collapses: 0, hospitalStays: 0 },

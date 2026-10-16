@@ -2,6 +2,13 @@
 import { CERTS, COURSES_BY_ID } from './courses.js';
 import { SKILL_LABELS } from './skills.js';
 
+// 被約談後的績效改善計畫，在下一次考核揭曉（§7.3）
+const PIP_TEXT = {
+  passed: '績效改善計畫通過了，主管說：「這一年辛苦了。」',
+  demoted: '績效改善計畫沒有通過：降了一級，月薪也被減了 10%。',
+  cut: '績效改善計畫沒有通過：月薪被減了 10%。',
+};
+
 const gainText = gain => Object.entries(gain).map(([id, n]) => `${SKILL_LABELS[id]} +${n}`).join('、');
 // 只差技能時的提示，例如「升主任還差管理 8，可以去上主管培訓班」
 const missingText = m => `升${m.title}還差${m.skills.map(s => `${SKILL_LABELS[s.id]} ${s.short}`).join('、')}，可以去「職涯」分頁報名課程。`;
@@ -17,6 +24,7 @@ export const NOTICES = {
       d.bonusMonths != null ? `年終 ${d.bonusMonths} 個月${d.prorated ? '（未滿一年，依在職月數按比例）' : ''}` : null,
       d.offer ? `主管：「想升你當『${d.offer.title}』，你覺得呢？」` : null,
       d.missing ? missingText(d.missing) : null,
+      d.pip ? PIP_TEXT[d.pip] : null,
     ],
     actions: d =>
       d.offer

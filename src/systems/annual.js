@@ -12,10 +12,11 @@ import { addSkill } from './study.js';
 const GRADE_ORDER = ['A', 'B', 'C', 'D'];
 const atLeast = (grade, required) => GRADE_ORDER.indexOf(grade) <= GRADE_ORDER.indexOf(required);
 const roundTo = (n, step) => Math.round(n / step) * step;
-const lastGradesA = (state, n) => {
+const lastGrades = (state, n, grade) => {
   const last = state.job.reviews.slice(-n);
-  return last.length === n && last.every(r => r.grade === 'A' && !r.trial);
+  return last.length === n && last.every(r => r.grade === grade && !r.trial);
 };
+const lastGradesA = (state, n) => lastGrades(state, n, 'A');
 
 // 1/1 結算時呼叫，評的是剛結束的那一年
 export function annualReview(state, rng) {
@@ -39,6 +40,14 @@ export function annualReview(state, rng) {
   state.job.salary = roundTo(salary, REVIEW.salaryRound);
   state.job.performance *= REVIEW.carryOver;
 
+  // 被約談後的績效改善計畫（§7.3）：這次 C 以上就結束，還是 D 就降級或減薪
+  let pip = null;
+  if (state.crisis.pip && !trial) {
+    state.crisis.pip = false;
+    pip = grade === 'D' ? demote(state) : 'passed';
+    addLog(state, { kind: 'pip', result: pip });
+  }
+
   // 年終和考核一起發（§7.4），一張卡片看完；到職未滿一年按在職月數比例
   const months = BONUS.months[grade];
   const ratio = Math.min(1, monthsBetween(state.job.startDay, state.day) / 12);
@@ -50,11 +59,22 @@ export function annualReview(state, rng) {
   pushCard(state, {
     kind: 'notice',
     id: 'review',
-    data: { year, grade, trial, raise, offer, missing, bonusMonths: months, prorated: ratio < 1 },
+    data: { year, grade, trial, raise, offer, missing, pip, bonusMonths: months, prorated: ratio < 1 },
     salary: { from: before, to: state.job.salary },
     deltas: { money: bonus },
   });
   if (grade === 'C') triggerEvent(state, 'year_end_bonus');
+  if (!pip && lastGrades(state, 2, 'D')) triggerEvent(state, 'pip_talk'); // 連兩年 D 被約談
+}
+
+// 降一級並減薪；已經是專員就只減薪，不低於基本工資
+function demote(state) {
+  const cut = salary => Math.max(REVIEW.minSalary, roundTo(salary * (1 - REVIEW.pipSalaryCut), REVIEW.salaryRound));
+  state.job.salary = cut(state.job.salary);
+  if (state.job.level === 1) return 'cut';
+  state.job.level -= 1;
+  state.job.levelStartDay = state.day;
+  return 'demoted';
 }
 
 // 考核卡片上的升遷抉擇：接受就升一級、月薪再調升，之後平日上班更累

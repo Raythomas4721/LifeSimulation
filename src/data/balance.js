@@ -79,6 +79,11 @@ export const FINANCE = {
   livingCost: 18_000,
   overtimePayRate: { weekday: 0.5, weekend: 1.0 },
   debtAnnualRate: 0.15,
+  debtPlanRate: 0.05, // 債務協商後的年利率
+  // 卡債事件鏈（§11）：負債滿 1 個月、3 個月、之後每 6 個月
+  debtBillMonths: 1,
+  debtCollectionMonths: 3,
+  debtCourtEveryMonths: 6,
 };
 
 export const REVIEW = {
@@ -95,6 +100,8 @@ export const REVIEW = {
   promotionRaise: 0.1, // 接受升遷時月薪另外調升（DESIGN.md §7.2）
   levelWorkEnergy: -1, // 每高一個職級，平日上班多扣的體力（升遷的代價）
   declineMood: 5, // 婉拒升遷時心情回升
+  pipSalaryCut: 0.1, // 績效改善計畫沒通過：降一級並減薪；已經是專員就只減薪
+  minSalary: 29_500, // 減薪不低於基本工資
   salaryRound: 100,
 };
 
@@ -105,7 +112,7 @@ export const BONUS = {
 export const EVENTS = {
   minGapDays: 38, // 兩個事件之間至少隔幾天（約 15 秒），讓事件間隔落在 15～30 秒（§10.2）
   holidayWindowDays: 14, // 節日可以延後幾天出現；延後還排不進去就跳過那一年
-  holidayCooldownDays: 700, // 同一個節日至少隔快兩年才再出現
+  holidayCooldownDays: 1000, // 同一個節日至少隔快三年才再出現（M7 從 700 調長，降低重複感）
   dailyChance: 1 / 12, // 空檔夠長時，隨機事件每天出現的機率
   cooldownDays: 180,
   weight: 10,
