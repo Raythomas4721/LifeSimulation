@@ -1,0 +1,9 @@
+{
+  "name": "life-simulate",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "npx serve .",
+    "simulate": "node tools/simulate.js"
+  }
+}
