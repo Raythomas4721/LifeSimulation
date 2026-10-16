@@ -1,6 +1,6 @@
 // 存讀檔（DESIGN.md §14.4）。格式變動時把 SAVE_VERSION 加 1，並在 MIGRATIONS 補上舊版升級函式
 const KEY = 'lifesim.save';
-export const SAVE_VERSION = 5;
+export const SAVE_VERSION = 6;
 
 // 遷移函式要自給自足，不引用現在的遊戲程式，舊存檔才不會因為程式改動而升級失敗
 const MIGRATIONS = {
@@ -67,6 +67,12 @@ const MIGRATIONS = {
     ...save,
     version: 5,
     state: { ...save.state, study: { ...save.state.study, certs: {} } },
+  }),
+  // v6：被約談與卡債（v0.2 M7）
+  5: save => ({
+    ...save,
+    version: 6,
+    state: { ...save.state, crisis: { pip: false, debtMonths: 0, debtPlan: false } },
   }),
 };
 

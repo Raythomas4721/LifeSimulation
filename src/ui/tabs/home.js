@@ -124,7 +124,11 @@ export const blocks = {
     if (energy <= 0) items.push('體力已經見底，再這樣下去身體會出問題。');
     else if (energy < THRESHOLDS.low) items.push('體力不足：工作表現累積減半。');
     if (mood < THRESHOLDS.low) items.push('心情很差：工作表現累積減半。');
-    if (state.money < 0) items.push('存款是負的：每月 1 日會加收利息（年利率 15%）。');
+    if (state.money < 0) {
+      const rate = state.crisis.debtPlan ? '債務協商中，年利率 5%' : '年利率 15%';
+      items.push(`存款是負的：每月 1 日會加收利息（${rate}），已經負債 ${state.crisis.debtMonths} 個月。`);
+    }
+    if (state.crisis.pip) items.push('績效改善計畫中：明年 1/1 考核要 C 以上，還是 D 就會降級減薪。');
     if (!items.length) return '';
     return `<section class="card card-warn"><h2>注意</h2><ul>${items.map(t => `<li>${t}</li>`).join('')}</ul></section>`;
   },

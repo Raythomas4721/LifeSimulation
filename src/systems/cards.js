@@ -20,8 +20,9 @@ export function closeCard(state) {
 
 // 離線時不自動處理、停下來等玩家的卡片（§5.3）：
 // 重大抉擇（有選項的通知：升遷、出院；考試這種 minor 的除外），以及還沒選的劇情事件（有 on 的事件，§10.3）
+// 和標了 major 的事件（被約談）
 export function isMajor(card) {
   if (card?.kind === 'notice') return !NOTICES[card.id]?.minor && Boolean(NOTICES[card.id]?.actions?.(card.data ?? {}));
-  if (card?.kind === 'event') return card.step === 'choose' && Boolean(EVENTS_BY_ID[card.id]?.on);
+  if (card?.kind === 'event') return card.step === 'choose' && Boolean(EVENTS_BY_ID[card.id]?.on || EVENTS_BY_ID[card.id]?.major);
   return false;
 }

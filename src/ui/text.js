@@ -41,6 +41,8 @@ const LOG_TEXT = {
   coursePass: e => `🎓 ${courseTitle(e)}結業了！`,
   courseFail: e => `${courseTitle(e)}出席不夠，沒有結業。`,
   courseDrop: e => `退掉了${courseTitle(e)}。`,
+  pip: e => ({ passed: '績效改善計畫通過了。', demoted: '😣 績效改善計畫沒過，被降級減薪。', cut: '😣 績效改善計畫沒過，被減薪。' })[e.result],
+  debtCleared: () => '💰 終於還清負債了！',
   examPass: e => `🏅 考過${courseTitle(e)}，拿到證照！`,
   examFail: e => `${courseTitle(e)}沒有考過。`,
 };

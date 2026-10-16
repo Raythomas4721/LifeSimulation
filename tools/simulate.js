@@ -69,6 +69,7 @@ function simulate(strategy) {
       上課: Object.values(state.study.done).reduce((a, b) => a + b, 0),
       證照: Object.keys(state.study.certs).join(' ') || '—',
       重症: (state.events.counts.stomach_ulcer ?? 0) + (state.events.counts.palpitation ?? 0),
+      約談: state.events.counts.pip_talk ?? 0,
     },
   };
 }
