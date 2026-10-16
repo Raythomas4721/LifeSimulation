@@ -5,28 +5,51 @@ import { advanceDay } from '../src/core/advance.js';
 import { createRng } from '../src/core/rng.js';
 import { calendarOf } from '../src/core/calendar.js';
 import { autoResolve } from '../src/systems/auto.js';
+import { enrollBlocker, enrollCourse } from '../src/systems/study.js';
 import { LADDER } from '../src/data/jobs.js';
 import { EVENT_LIST } from '../src/data/events.js';
 
 const YEARS = Number(process.argv[2] ?? 10);
 const SEED = Number(process.argv[3] ?? 12345);
 
-// overtime：哪幾個平日晚上加班（0 = 週一）
+// overtime／exercise：哪幾格加班、運動（0 = 週一）
+// study：管理不夠升下一級時報名課程（能報 PMP 就先報，否則主管培訓班），上課期間把這幾格改成進修
 const STRATEGIES = [
   { name: '不加班', overtime: [] },
+  { name: '不加班＋上課', overtime: [], study: [1, 3] },
   { name: '加班 2 格', overtime: [1, 3] },
-  { name: '加班 2 格、婉拒升遷', overtime: [1, 3], promotion: 'decline' },
-  { name: '加班 3 格', overtime: [0, 2, 4] },
-  { name: '加班 4 格', overtime: [0, 1, 2, 3] },
+  { name: '加班 2 格＋上課', overtime: [1, 3], study: [0, 2] },
+  { name: '加班 2 格＋上課＋運動', overtime: [1, 3], study: [0, 2], exercise: [5] },
+  { name: '加班 2 格＋上課、婉拒升遷', overtime: [1, 3], study: [0, 2], promotion: 'decline' },
+  { name: '加班 3 格＋上課', overtime: [0, 2, 4], study: [1, 3] },
+  { name: '加班 4 格＋上課', overtime: [0, 1, 2, 3], study: [4, 5] },
 ];
+const EVENT_SAMPLE = 3; // 列出事件次數的策略
 
-function simulate({ overtime, promotion = 'accept' }) {
+function scheduleFor(state, { overtime, study = [], exercise = [] }) {
+  const s = Array(7).fill('rest');
+  overtime.forEach(i => (s[i] = 'overtime'));
+  exercise.forEach(i => (s[i] = 'exercise'));
+  if (state.study.course) study.forEach(i => (s[i] = 'study'));
+  return s;
+}
+
+function planStudy(state) {
+  if (state.study.course) return;
+  const next = LADDER.find(l => l.level === state.job.level + 1);
+  if (state.skills.management >= (next?.skills?.management ?? 0)) return;
+  enrollCourse(state, enrollBlocker(state, 'pmp') ? 'leadership' : 'pmp');
+}
+
+function simulate(strategy) {
+  const { promotion = 'accept' } = strategy;
   const state = createState('模擬');
   const rng = createRng(SEED);
-  overtime.forEach(i => (state.schedule[i] = 'overtime'));
-  // 檢討卡片「照舊」不會改行程，所以策略會一直維持
+  // 檢討卡片選「照舊」，所以由策略每天重新排行程（上課期間才排進修）
   const endYear = calendarOf(0).year + YEARS;
   while (calendarOf(state.day).year < endYear || calendarOf(state.day).month < 2) {
+    if (strategy.study) planStudy(state);
+    state.schedule = scheduleFor(state, strategy);
     advanceDay(state, rng);
     while (state.pending) autoResolve(state, rng, { promotion });
   }
@@ -40,7 +63,12 @@ function simulate({ overtime, promotion = 'accept' }) {
       存款: state.money.toLocaleString('zh-TW'),
       病倒: state.stats.collapses,
       住院: state.stats.hospitalStays,
-      事件數: Object.values(state.events.counts).reduce((a, b) => a + b, 0),
+      管理: Math.floor(state.skills.management),
+      專業: Math.floor(state.skills.professional),
+      體能: Math.floor(state.fitness),
+      上課: Object.values(state.study.done).reduce((a, b) => a + b, 0),
+      證照: Object.keys(state.study.certs).join(' ') || '—',
+      重症: (state.events.counts.stomach_ulcer ?? 0) + (state.events.counts.palpitation ?? 0),
     },
   };
 }
@@ -49,7 +77,7 @@ const results = STRATEGIES.map(s => ({ name: s.name, ...simulate(s) }));
 console.log(`模擬 ${YEARS} 年（到 ${calendarOf(0).year + YEARS} 年 1 月底），種子 ${SEED}；卡片照預設選項處理\n`);
 console.table(Object.fromEntries(results.map(r => [r.name, r.row])));
 
-// 事件出現次數（以「加班 2 格」為例），用來檢查有沒有事件太常或從來沒出現
-const counts = results[1].state.events.counts;
-console.log('\n事件出現次數（加班 2 格）：');
-console.log(EVENT_LIST.map(e => `${e.title} ${counts[e.id] ?? 0}`).join('、'));
+// 事件出現次數，用來檢查有沒有事件太常或從來沒出現
+const sample = results[EVENT_SAMPLE];
+console.log(`\n事件出現次數（${sample.name}）：`);
+console.log(EVENT_LIST.map(e => `${e.title} ${sample.state.events.counts[e.id] ?? 0}`).join('、'));

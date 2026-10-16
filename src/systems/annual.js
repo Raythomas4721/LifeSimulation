@@ -1,5 +1,5 @@
 // 年度考核、升遷（DESIGN.md §7.2、§7.3）與年終（§7.4），都在 1/1 一起處理
-import { BONUS, REVIEW } from '../data/balance.js';
+import { BONUS, REVIEW, SKILLS } from '../data/balance.js';
 import { LADDER } from '../data/jobs.js';
 import { calendarOf, monthsBetween } from '../core/calendar.js';
 import { addLog } from '../core/state.js';
@@ -7,10 +7,15 @@ import { pushCard } from './cards.js';
 import { applyEffects } from './effects.js';
 import { triggerEvent } from './events.js';
 import { gradeFor } from './work.js';
+import { addSkill } from './study.js';
 
 const GRADE_ORDER = ['A', 'B', 'C', 'D'];
 const atLeast = (grade, required) => GRADE_ORDER.indexOf(grade) <= GRADE_ORDER.indexOf(required);
 const roundTo = (n, step) => Math.round(n / step) * step;
+const lastGradesA = (state, n) => {
+  const last = state.job.reviews.slice(-n);
+  return last.length === n && last.every(r => r.grade === 'A' && !r.trial);
+};
 
 // 1/1 結算時呼叫，評的是剛結束的那一年
 export function annualReview(state, rng) {
@@ -22,9 +27,13 @@ export function annualReview(state, rng) {
   let salary = state.job.salary * (1 + raise);
 
   state.job.reviews.push({ year, grade, trial });
+  if (state.job.level >= SKILLS.managerFromLevel) addSkill(state, 'management', SKILLS.managerYearly); // 當主管本身就是練習
   // 符合條件時不直接升遷，而是在考核卡片上讓玩家決定要不要接受（§7.2）
   const next = LADDER.find(l => l.level === state.job.level + 1);
-  const offer = !trial && next && canPromote(state, next, grade) ? { level: next.level, title: next.title } : null;
+  const check = !trial && next ? promotionCheck(state, next, grade) : null;
+  const offer = check?.ok ? { level: next.level, title: next.title } : null;
+  // 年資和考核都夠、只差技能時，卡片上告訴玩家還差多少
+  const missing = check?.missingSkills.length ? { title: next.title, skills: check.missingSkills } : null;
 
   const before = state.job.salary;
   state.job.salary = roundTo(salary, REVIEW.salaryRound);
@@ -41,7 +50,7 @@ export function annualReview(state, rng) {
   pushCard(state, {
     kind: 'notice',
     id: 'review',
-    data: { year, grade, trial, raise, offer, bonusMonths: months, prorated: ratio < 1 },
+    data: { year, grade, trial, raise, offer, missing, bonusMonths: months, prorated: ratio < 1 },
     salary: { from: before, to: state.job.salary },
     deltas: { money: bonus },
   });
@@ -66,12 +75,14 @@ export function declinePromotion(state) {
   addLog(state, { kind: 'declinePromotion', title: offer.title });
 }
 
-// 技能、人脈條件在對應版本開放前視為符合；年資看的是目前職級待了多久
-function canPromote(state, next, grade) {
-  if (next.consecutiveA) {
-    const last = state.job.reviews.slice(-next.consecutiveA);
-    return last.length === next.consecutiveA && last.every(r => r.grade === 'A' && !r.trial);
-  }
-  const years = monthsBetween(state.job.levelStartDay, state.day) / 12;
-  return years >= next.years && atLeast(grade, next.grade);
+// 人脈條件在 v0.4 開放前視為符合；年資看的是目前職級待了多久
+// missingSkills 只在其他條件都符合時才列，避免年資還不夠就叫玩家去上課
+export function promotionCheck(state, next, grade) {
+  const basic = next.consecutiveA
+    ? lastGradesA(state, next.consecutiveA)
+    : monthsBetween(state.job.levelStartDay, state.day) / 12 >= next.years && atLeast(grade, next.grade);
+  const missingSkills = Object.entries(next.skills ?? {})
+    .filter(([id, need]) => state.skills[id] < need)
+    .map(([id, need]) => ({ id, need, short: Math.ceil(need - state.skills[id]) }));
+  return { ok: basic && !missingSkills.length, missingSkills: basic ? missingSkills : [] };
 }

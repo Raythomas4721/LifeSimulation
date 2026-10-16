@@ -1,16 +1,9 @@
 // 年度回顧的卡片內容（DESIGN.md §5.4），外框由 cards.js 負責
 import { BOSS, BOSS_COMMENTS } from '../data/reviews.js';
-import { SCHEDULE_PRESETS, SLOT_SHORT } from '../data/schedule.js';
+import { schedulePresets } from './text.js';
 import { formatDate, formatMoney, formatSigned } from './format.js';
-import { activityOf, nextActivity } from './text.js';
 
-let draft = null; // 「自己排」時暫存的行程
-
-export function resetDraft() {
-  draft = null;
-}
-
-export function reviewCard(p) {
+export function reviewCard(p, state) {
   const r = p.report;
   // 舊存檔裡可能還留著週檢討或月結的卡片
   const title = p.type === 'yearly' ? `${p.year} 年度回顧` : p.type === 'weekly' ? `第 ${p.number} 週結束了` : `${p.month} 月結束了`;
@@ -34,50 +27,18 @@ export function reviewCard(p) {
         </dl>
         <p class="speech"><b>${BOSS}：</b>「${comment}」</p>
         <h3>明年的每週行程</h3>
-        ${draft ? editor(draft) : presets()}`;
+        ${presets(state)}`;
 }
 
-function presets() {
+// 活動有 5 種，逐格調整改到「今天」分頁的時段選單做（§5.4）
+function presets(state) {
   return `
     <div class="preset-grid">
-      ${SCHEDULE_PRESETS.map(p => `<button class="btn${p.id === 'keep' ? ' btn-primary' : ''}" data-action="reviewPreset" data-value="${p.id}">${p.label}</button>`).join('')}
+      ${schedulePresets(state).map(p => `<button class="btn${p.id === 'keep' ? ' btn-primary' : ''}" data-action="reviewPreset" data-value="${p.id}">${p.label}</button>`).join('')}
     </div>
-    <button class="btn btn-block" data-action="reviewCustom">自己排…</button>`;
-}
-
-function editor(schedule) {
-  const chips = schedule
-    .map((id, i) => {
-      const a = activityOf(id);
-      return `<button class="chip" data-action="reviewToggle" data-index="${i}" aria-label="週${SLOT_SHORT[i]}：${a.label}，點一下切換"><small>${SLOT_SHORT[i]}</small>${a.emoji}</button>`;
-    })
-    .join('');
-  return `
-    <p class="muted">點一下切換休息或加班。</p>
-    <div class="week">${chips}</div>
-    <div class="preset-grid">
-      <button class="btn" data-action="reviewBack">返回</button>
-      <button class="btn btn-primary" data-action="reviewConfirm">照這樣安排</button>
-    </div>`;
+    <p class="muted">想一天一天調整，關掉後在「今天」分頁點時段就能改。</p>`;
 }
 
 export const actions = {
-  reviewPreset: ({ value }, ctl) => {
-    const preset = SCHEDULE_PRESETS.find(p => p.id === value);
-    ctl.resolveReview(preset.schedule ?? null);
-  },
-  reviewCustom: (_, ctl) => {
-    draft = [...ctl.state.schedule];
-  },
-  reviewToggle: ({ index }) => {
-    draft[index] = nextActivity(draft[index]);
-  },
-  reviewBack: () => {
-    draft = null;
-  },
-  reviewConfirm: (_, ctl) => {
-    const schedule = draft;
-    draft = null;
-    ctl.resolveReview(schedule);
-  },
+  reviewPreset: ({ value }, ctl) => ctl.resolveReviewPreset(value),
 };

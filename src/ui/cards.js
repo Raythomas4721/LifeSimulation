@@ -2,8 +2,9 @@
 import { EVENTS_BY_ID } from '../data/events.js';
 import { CAST_BY_ID } from '../data/cast.js';
 import { NOTICES } from '../data/notices.js';
-import { REVIEW } from '../data/balance.js';
+import { EXAM, REVIEW } from '../data/balance.js';
 import { workEffects } from '../systems/work.js';
+import { examChance } from '../systems/study.js';
 import { esc, formatMoney, formatSigned } from './format.js';
 import { deltaItems, noteText } from './text.js';
 import * as review from './review.js';
@@ -13,11 +14,10 @@ export const binds = {};
 export const blocks = {
   card: ({ state }) => {
     const p = state.pending;
-    if (p?.kind !== 'review') review.resetDraft();
     if (!p) return '';
     const inner =
-      p.kind === 'review' ? review.reviewCard(p)
-      : p.kind === 'event' ? eventCard(p)
+      p.kind === 'review' ? review.reviewCard(p, state)
+      : p.kind === 'event' ? eventCard(p, state)
       : p.kind === 'away' ? awayCard(p)
       : noticeCard(p, state);
     // data-card 讓每張新卡片的 HTML 都不同，滑出動畫才會重播
@@ -36,7 +36,7 @@ const castTag = e => {
   return c ? `<p class="cast-tag">${c.emoji} ${c.name}<small>${c.role}</small></p>` : '';
 };
 
-function eventCard(p) {
+function eventCard(p, state) {
   const e = EVENTS_BY_ID[p.id];
   if (p.step === 'choose') {
     return `
@@ -44,7 +44,7 @@ function eventCard(p) {
       <h2 id="card-title">${esc(e.title)}</h2>
       <p class="speech">${esc(e.text)}</p>
       <div class="card-choices">
-        ${e.choices.map((c, i) => `<button class="btn btn-block" data-action="eventChoose" data-index="${i}">${esc(c.text)}</button>`).join('')}
+        ${e.choices.map((c, i) => `<button class="btn btn-block choice-btn" data-action="eventChoose" data-index="${i}">${esc(c.text)}${c.hint ? `<small>${esc(c.hint(state))}</small>` : ''}</button>`).join('')}
       </div>`;
   }
   return `
@@ -64,7 +64,7 @@ function noticeCard(p, state) {
   const buttons = actions
     ? actions
         .map((a, i) => {
-          const hint = actionHint(a.id, state);
+          const hint = actionHint(a.id, state, data);
           return `<button class="btn btn-block choice-btn${i === 0 ? ' btn-primary' : ''}" data-action="noticeAction" data-value="${a.id}">${a.label}${hint ? `<small>${hint}</small>` : ''}</button>`;
         })
         .join('')
@@ -118,8 +118,12 @@ function formatDuration(ms) {
   return `${Math.floor(hours / 24)} 天${hours % 24 ? ` ${hours % 24} 小時` : ''}`;
 }
 
-// 升遷抉擇的效果說明，照目前月薪與職級算
-function actionHint(id, state) {
+// 選項的效果說明，照目前的數值算：升遷抉擇、考前一晚
+const pct = p => `${Math.round(p * 100)}%`;
+
+function actionHint(id, state, data) {
+  if (id === 'examSleep') return `通過機率約 ${pct(examChance(state, data))}`;
+  if (id === 'examCram') return `通過機率約 ${pct(examChance(state, data, true))}，但體力 ${formatSigned(EXAM.cramEnergy)}`;
   if (id === 'acceptPromotion') {
     const salary = Math.round((state.job.salary * (1 + REVIEW.promotionRaise)) / REVIEW.salaryRound) * REVIEW.salaryRound;
     const now = workEffects(state).energy;

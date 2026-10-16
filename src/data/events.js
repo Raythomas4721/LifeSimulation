@@ -1,11 +1,14 @@
 // 事件資料（DESIGN.md §10）。邏輯程式不寫死任何事件，要加事件只改 src/data/ 底下的事件檔
 import { FIRST_YEAR_EVENTS } from './events-first-year.js';
+import { STUDY_EVENTS } from './events-study.js';
 // 事件在一天開始時（06:00）跳出，所以文字用「今天」「昨晚」的角度寫
 // c：今天的日曆 { month, date, weekday（0 = 週日）, weekend }
 // 欄位：on（劇情事件的日子，見 events-first-year.js）、cast（固定班底，見 cast.js）
 // 選項欄位：effects、chance { p, effects, then, result, otherwise, otherwiseResult }、
 //           delayed { days, effects }、forceSlots { activity, weeks, slots }、sickLeave、result、default
-// effects 可用：money、energy、mood、performance；illness: 'collapse' 直接病倒
+// effects 可用：money、energy、mood、performance、技能（professional 等）、fitness；
+//   illness: 'collapse' 直接病倒、'hospital' 直接住院；effects 和 chance.p 也可以是 s => … 的函式
+// hint：選項按鈕下方的說明（s => 文字），例如看技能的成功機率
 // 工作表現一年大約只累積 36，所以事件的影響控制在 ±1～4；預設選項（離線時自動選）盡量接近中性
 
 const weekday = (s, c) => !c.weekend;
@@ -272,6 +275,6 @@ export const EVENT_LIST = [
   },
 ];
 
-EVENT_LIST.push(...FIRST_YEAR_EVENTS);
+EVENT_LIST.push(...FIRST_YEAR_EVENTS, ...STUDY_EVENTS);
 
 export const EVENTS_BY_ID = Object.fromEntries(EVENT_LIST.map(e => [e.id, e]));

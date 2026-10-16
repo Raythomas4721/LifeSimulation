@@ -12,6 +12,9 @@ export function createState(name) {
     vitals: { energy: START.energy, energyMax: START.energyMax, mood: START.mood },
     // levelStartDay：升上目前職級的那天，升遷年資從這天算（DESIGN.md §7.2）
     job: { level: 1, salary: START.salary, startDay: 0, levelStartDay: 0, performance: START.performance, reviews: [] },
+    skills: { professional: 0, management: 0, language: 0, programming: 0 }, // DESIGN.md §6
+    fitness: 0,
+    study: { course: null, done: {}, certs: {} }, // 目前的課程、每門課結業的次數、證照與考到的日子（§9.1）
     schedule: Array(7).fill('rest'),
     statuses: [], // 病假、住院、強制時段、延遲效果（DESIGN.md §14.3）
     health: { collapses: 0, sickDays: 0 }, // 當年度的病倒次數與病假天數，每年 1/1 歸零

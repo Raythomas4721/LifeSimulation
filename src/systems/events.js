@@ -6,7 +6,7 @@ import { addLog } from '../core/state.js';
 import { pushCard } from './cards.js';
 import { applyEffects, diff, snapshot } from './effects.js';
 import { addStatus } from './statuses.js';
-import { collapse, startSickLeave } from './health.js';
+import { collapse, hospitalize, startSickLeave } from './health.js';
 
 export function eventCalendar(day) {
   const c = calendarOf(day);
@@ -81,6 +81,9 @@ export function triggerEvent(state, id) {
 
 export const defaultChoice = id => Math.max(0, EVENTS_BY_ID[id].choices.findIndex(c => c.default));
 
+// chance.p 可以是函式，例如外語越好越容易成功
+export const chanceOf = (choice, state) => (typeof choice.chance.p === 'function' ? choice.chance.p(state) : choice.chance.p);
+
 // 套用選項的效果，卡片換成「結果」畫面；後續事件與病倒通知排進佇列
 export function chooseEvent(state, rng, index) {
   const card = state.pending;
@@ -92,16 +95,18 @@ export function chooseEvent(state, rng, index) {
   const before = snapshot(state);
   let text = choice.result ?? '';
   let followUp = null;
-  let collapsed = false;
+  let illness = null;
+  // effects 可以是函式，依目前狀態決定數值（例如學費補助是學費的一半）
   const apply = fx => {
-    if (!fx) return;
-    applyEffects(state, fx);
-    if (fx.illness === 'collapse') collapsed = true;
+    const effects = typeof fx === 'function' ? fx(state) : fx;
+    if (!effects) return;
+    applyEffects(state, effects);
+    if (effects.illness) illness = effects.illness;
   };
 
   apply(choice.effects);
   if (choice.chance) {
-    if (rng.next() < choice.chance.p) {
+    if (rng.next() < chanceOf(choice, state)) {
       apply(choice.chance.effects);
       text = choice.chance.result ?? text;
       followUp = choice.chance.then ?? null;
@@ -130,6 +135,7 @@ export function chooseEvent(state, rng, index) {
 
   Object.assign(card, { step: 'result', choice: index, text, deltas: diff(before, snapshot(state)), notes });
   addLog(state, { kind: 'event', id: event.id, choice: index });
-  if (collapsed) collapse(state, state.day);
+  if (illness === 'collapse') collapse(state, state.day);
+  if (illness === 'hospital') hospitalize(state, state.day);
   if (followUp) triggerEvent(state, followUp);
 }

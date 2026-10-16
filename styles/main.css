@@ -426,9 +426,19 @@ h3 { margin: 16px 0 8px; font-size: 16px; }
 
 
 /* 每週行程卡片 */
-.preset-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 4px 0 10px; padding: 0 6px; }
+.preset-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(72px, 1fr)); gap: 6px; margin: 4px 0 10px; padding: 0 6px; }
 .preset-row .btn { padding: 6px 4px; font-size: 14px; box-shadow: 2px 2px 0 var(--ink); }
 .legend { margin: 8px 6px 0; padding: 0; list-style: none; font-size: 13px; color: var(--muted); }
 .legend li { padding: 2px 0; }
 .forecast { margin: 8px 6px 0; font-size: 14px; font-weight: 700; }
 .card-tight .note { margin: 0 6px 8px; }
+
+/* 技能與進修（DESIGN.md §6、§9.1） */
+.skills, .courses { margin: 0; padding: 0; list-style: none; }
+.skills li { padding: 6px 0; border-bottom: 1px dashed var(--muted); }
+.skills small { display: block; margin-top: 2px; font-size: 12px; }
+.courses li { padding: 10px 0; border-bottom: 1px dashed var(--muted); }
+.courses p, .course-now p { margin: 0 0 4px; }
+.course-now { margin-bottom: 8px; padding: 8px 10px; border: 2px solid var(--ink); background: var(--bg); }
+.legend:empty, .forecast:empty { display: none; }
+.btn:disabled { opacity: 0.55; box-shadow: none; transform: none; cursor: not-allowed; }

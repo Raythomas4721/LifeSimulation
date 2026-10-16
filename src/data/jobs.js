@@ -1,4 +1,4 @@
-// 通用職位階梯（DESIGN.md §7.2）。skills、network 條件在對應版本開放前視為符合
+// 通用職位階梯（DESIGN.md §7.2）。skills 從 v0.2 起生效；network 在 v0.4 開放前視為符合
 export const LADDER = [
   { level: 1, title: '專員' },
   { level: 2, title: '資深專員', years: 2, grade: 'B' },

@@ -69,12 +69,11 @@ export function mountApp(root, ctl) {
   function onClick(e) {
     const btn = e.target.closest('[data-action]');
     if (!btn || !root.contains(btn)) return;
-    const { action, value, index } = btn.dataset;
+    const { action, value } = btn.dataset;
     switch (action) {
       case 'tab': return showTab(value);
       case 'speed': ctl.setSpeed(Number(value)); break;
       case 'preset': ctl.applyPreset(value); break;
-      case 'toggleSlot': ctl.toggleSlot(Number(index)); break;
       case 'save': ctl.saveNow(); break;
       case 'restart':
         if (confirm('確定要刪掉存檔、重新開始嗎？')) ctl.restart();

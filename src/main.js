@@ -1,6 +1,6 @@
 // 進入點：載入存檔、啟動迴圈、掛上 UI
 import { SAVE, TIME } from './data/balance.js';
-import { SCHEDULE_PRESETS, SLOT_ACTIVITIES } from './data/schedule.js';
+import { SLOT_ACTIVITIES } from './data/schedule.js';
 import { createState } from './core/state.js';
 import { createRng, randomSeed } from './core/rng.js';
 import { createLoop } from './core/loop.js';
@@ -13,11 +13,12 @@ import { chooseEvent, triggerEvent } from './systems/events.js';
 import { autoResolve } from './systems/auto.js';
 import { runOffline } from './systems/offline.js';
 import { acceptPromotion, declinePromotion } from './systems/annual.js';
+import { presetSchedule } from './systems/schedule.js';
+import { dropCourse, enrollCourse, takeExam } from './systems/study.js';
 import { mountApp } from './ui/app.js';
 import { runStartFlow } from './ui/start.js';
 import { createTutorial } from './ui/tutorial.js';
 import { mountDebug } from './ui/debug.js';
-import { nextActivity } from './ui/text.js';
 
 const PARAMS = new URLSearchParams(location.search);
 const DEBUG = PARAMS.has('debug');
@@ -48,23 +49,28 @@ const ctl = {
     if (!SLOT_IDS.includes(activity) || index < 0 || index > 6) return;
     game.state.schedule[index] = activity;
     save();
-  },
-  toggleSlot(index) {
-    ctl.setSlot(index, nextActivity(game.state.schedule[index]));
     session.tutorial?.notify('schedule');
   },
   applyPreset(id) {
-    const preset = SCHEDULE_PRESETS.find(p => p.id === id);
-    if (!preset?.schedule) return;
-    game.state.schedule = [...preset.schedule];
+    const schedule = presetSchedule(game.state, id);
+    if (!schedule) return;
+    game.state.schedule = schedule;
     save();
     session.tutorial?.notify('schedule');
   },
+  // 進修（§9.1）
+  enrollCourse(id) {
+    if (enrollCourse(game.state, id)) save();
+  },
+  dropCourse() {
+    dropCourse(game.state);
+    save();
+  },
 
-  resolveReview(schedule) {
+  // 年度回顧選一鍵行程；「照舊」不改行程
+  resolveReviewPreset(id) {
     if (game.state.pending?.kind !== 'review') return;
-    if (schedule && (schedule.length !== 7 || !schedule.every(id => SLOT_IDS.includes(id)))) return;
-    resolveReview(game.state, schedule);
+    resolveReview(game.state, id === 'keep' ? null : presetSchedule(game.state, id));
     save();
   },
   chooseEvent(index) {
@@ -76,11 +82,12 @@ const ctl = {
     closeCard(game.state);
     save();
   },
-  // 通知卡片上的選項：升遷抉擇、出院後繼續
+  // 通知卡片上的選項：升遷抉擇、考前一晚、出院後繼續
   noticeAction(id) {
     if (game.state.pending?.kind !== 'notice') return;
     if (id === 'acceptPromotion') acceptPromotion(game.state);
     if (id === 'declinePromotion') declinePromotion(game.state);
+    if (id === 'examSleep' || id === 'examCram') takeExam(game.state, game.rng, id === 'examCram');
     closeCard(game.state);
     save();
   },

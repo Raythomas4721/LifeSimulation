@@ -1,8 +1,10 @@
-import { DAILY, REVIEW, THRESHOLDS } from '../data/balance.js';
+import { DAILY, REVIEW, SKILLS, THRESHOLDS } from '../data/balance.js';
+import { addSkill } from './study.js';
 
+// 專業越高累積越快；體力或心情太低時減半（§6.1）
 export function performanceMultiplier(state) {
   const { energy, mood } = state.vitals;
-  let m = 1;
+  let m = 1 + state.skills.professional * SKILLS.professionalPerformance;
   if (energy < THRESHOLDS.low) m *= THRESHOLDS.lowPenalty;
   if (mood < THRESHOLDS.low) m *= THRESHOLDS.lowPenalty;
   return m;
@@ -18,6 +20,7 @@ export function applyWorkday(state, multiplier) {
   state.vitals.energy += fx.energy;
   state.vitals.mood += fx.mood;
   state.job.performance += fx.performance * multiplier;
+  addSkill(state, 'professional', SKILLS.workProfessional);
   state.stats.workDays += 1;
   state.period.workDays += 1;
 }
