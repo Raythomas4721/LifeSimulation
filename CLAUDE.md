@@ -1,4 +1,4 @@
-# LifeSimulate（暫名：上班模擬器）
+# 上班模擬器（Office Life Simulator）
 
 手機優先的放置型人生經營遊戲。開工前先讀 `docs/DESIGN.md`，規格以那份為準；若實作需要偏離規格，先提出來討論，同意後再回頭更新文件。
 
