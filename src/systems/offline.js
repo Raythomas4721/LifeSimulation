@@ -51,8 +51,9 @@ export function runOffline(state, rng, awayMs) {
     reviews,
     stopped,
   };
-  // 只離開一下、什麼事都沒發生時不跳摘要，免得切個分頁就多一張卡片
-  if (ran >= OFFLINE.minSummaryDays || happened.length || stopped) pushCardFront(state, summary);
+  // 只離開一下、什麼事都沒發生時不跳摘要，免得切個分頁就多一張卡片；
+  // 離開前就有抉擇在等（一天都沒推進）也不跳
+  if (ran >= OFFLINE.minSummaryDays || happened.length || (stopped && ran > 0)) pushCardFront(state, summary);
   return summary;
 }
 

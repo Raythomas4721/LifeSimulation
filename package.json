@@ -4,6 +4,8 @@
   "type": "module",
   "scripts": {
     "dev": "npx serve .",
-    "simulate": "node tools/simulate.js"
+    "simulate": "node tools/simulate.js",
+    "icons": "node tools/make-icons.js",
+    "sw": "node tools/update-sw.js"
   }
 }

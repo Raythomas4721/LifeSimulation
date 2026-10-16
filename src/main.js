@@ -19,7 +19,8 @@ import { createTutorial } from './ui/tutorial.js';
 import { mountDebug } from './ui/debug.js';
 import { nextActivity } from './ui/text.js';
 
-const DEBUG = new URLSearchParams(location.search).has('debug');
+const PARAMS = new URLSearchParams(location.search);
+const DEBUG = PARAMS.has('debug');
 const SLOT_IDS = SLOT_ACTIVITIES.map(a => a.id);
 const root = document.getElementById('app');
 
@@ -223,3 +224,7 @@ async function boot() {
 }
 
 boot();
+
+// service worker 只在正式網址註冊；本機開發加 ?sw 才註冊，免得一直拿到快取的舊檔（§14.5）
+const LOCAL = ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname);
+if ('serviceWorker' in navigator && (!LOCAL || PARAMS.has('sw'))) navigator.serviceWorker.register('sw.js');

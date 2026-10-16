@@ -20,3 +20,5 @@ ES modules 不能直接用 file:// 開啟，要起本機伺服器：
 ```bash
 npx serve .
 ```
+
+手機版是 PWA：改了任何遊戲檔案、要推上 GitHub 前，先跑 `node tools/update-sw.js` 更新 service worker 的快取清單與版本號（見 DESIGN.md §14.5），否則玩家會一直拿到舊檔。

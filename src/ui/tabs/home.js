@@ -10,6 +10,7 @@ import { slotEffects, weeklyForecast } from '../../systems/schedule.js';
 import { leaveOn } from '../../systems/statuses.js';
 import { esc, formatDate, formatNumber, formatSigned } from '../format.js';
 import { activityOf, logText, milestoneText } from '../text.js';
+import { spriteImg } from '../sprite.js';
 
 const MILESTONE_SHOW_DAYS = 14; // 里程碑台詞顯示幾天（約 5 秒）
 const THOUGHT_DAYS = 10; // 每幾天換一句台詞
@@ -17,7 +18,13 @@ let poke = 0; // 點主角換台詞
 
 export function render() {
   return `
-    <div data-block="scene"></div>
+    <div class="scene">
+      <div class="scene-stage">
+        <div data-block="sceneArt"></div>
+        <div data-block="bubble"></div>
+      </div>
+      <p class="scene-label" data-bind="sceneLabel"></p>
+    </div>
     <section class="card card-tight" data-tour="week">
       <h2>下班後的時間怎麼用？</h2>
       <div class="preset-row" data-block="presets"></div>
@@ -41,6 +48,7 @@ const forcedNow = state => state.statuses.find(s => s.type === 'forceSlot' && s.
 const fxText = fx => `體力 ${formatSigned(fx.energy)}、心情 ${formatSigned(fx.mood)}`;
 
 export const binds = {
+  sceneLabel: ({ state }) => sceneOf(state).label,
   // 請假或被指派加班時，實際做的事和行程不同，要講清楚
   weekNote: ({ state }) => {
     const until = s => formatDate(s.endDay - 1, { weekday: false });
@@ -61,17 +69,21 @@ export const binds = {
 };
 
 export const blocks = {
-  scene: ({ state }) => {
+  // 背景與主角：場景、季節或狀態變了才重畫
+  sceneArt: ({ state }) => {
     const s = sceneOf(state);
-    const thought = thoughtOf(state, s);
+    const overlays = s.kind === 'work' ? [] : [{ id: 'mask', x: 9, y: 12 }];
     return `
-      <div class="scene sky-${s.sky}">
-        <span class="scene-sky" aria-hidden="true">${s.skyIcon}</span>
-        <span class="scene-place" aria-hidden="true">${s.place}</span>
-        <span class="scene-bubble${thought.milestone ? ' is-milestone' : ''}">${esc(thought.text)}</span>
-        <button class="scene-player" data-action="poke" aria-label="和主角說話">🙂${s.status ? `<span class="scene-status">${s.status}</span>` : ''}</button>
-        <span class="scene-label">${s.label}</span>
-      </div>`;
+      ${spriteImg(s.place, { season: s.season }, 'scene-bg')}
+      <button class="scene-player" data-action="poke" aria-label="和主角說話">
+        ${spriteImg('player', { overlays }, 'player')}
+        ${s.status ? spriteImg(s.status, {}, 'scene-status') : ''}
+      </button>`;
+  },
+
+  bubble: ({ state }) => {
+    const thought = thoughtOf(state, sceneOf(state));
+    return `<span class="scene-bubble${thought.milestone ? ' is-milestone' : ''}">${esc(thought.text)}</span>`;
   },
 
   presets: ({ state }) =>
@@ -111,23 +123,21 @@ export const actions = {
   },
 };
 
-// M4 換成點陣圖；這裡先用 emoji 表示，背景顏色跟著季節變
+// 場景依狀態切換（sprites.js），窗外跟著季節變；請假或住院時主角戴口罩
 function sceneOf(state) {
   const season = seasonOf(calendarOf(state.day).month);
   const leave = leaveOn(state, state.day);
   const forced = forcedNow(state);
   const [place, kind, doing] =
-    leave?.type === 'hospital' ? ['🏥', 'hospital', '住院中']
-    : leave ? ['🛌', 'sick', '請病假在家休息']
-    : forced ? ['💻', 'work', '被指派加班中']
-    : ['🏢', 'work', '努力上班中'];
+    leave?.type === 'hospital' ? ['hospital', 'hospital', '住院中']
+    : leave ? ['home', 'sick', '請病假在家休息']
+    : forced ? ['office_night', 'work', '被指派加班中']
+    : ['office', 'work', '努力上班中'];
   const overtimeDays = state.schedule.filter(id => id === 'overtime').length;
   return {
     place,
     kind,
-    sky: season.id,
-    skyIcon: season.icon,
-    label: `${season.label}天・${doing}`,
+    label: `${season.icon} ${season.label}天・${doing}`,
     status: statusIcon(state),
     season: season.id,
     overtimeHeavy: Boolean(forced) || overtimeDays >= 3,
@@ -136,9 +146,9 @@ function sceneOf(state) {
 
 function statusIcon(state) {
   const { energy, mood } = state.vitals;
-  if (energy < THRESHOLDS.low) return '💦';
-  if (mood < THRESHOLDS.low) return '🌧️';
-  if (mood >= THRESHOLDS.happy) return '🎵';
+  if (energy < THRESHOLDS.low) return 'sweat';
+  if (mood < THRESHOLDS.low) return 'cloud';
+  if (mood >= THRESHOLDS.happy) return 'note';
   return '';
 }
 

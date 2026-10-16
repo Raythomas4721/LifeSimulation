@@ -1,0 +1,16 @@
+{
+  "name": "上班模擬器",
+  "short_name": "上班模擬器",
+  "description": "手機上的放置型上班人生：上班、加班、升遷，一年兩分半鐘。",
+  "lang": "zh-Hant-TW",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f4efe6",
+  "theme_color": "#f4efe6",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

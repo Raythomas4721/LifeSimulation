@@ -3,6 +3,7 @@ import { SURNAMES, GIVEN_NAMES } from '../data/names.js';
 import { ageOn } from '../core/calendar.js';
 import { decodeSaveCode, writeSave } from '../core/save.js';
 import { esc } from './format.js';
+import { spriteImg } from './sprite.js';
 
 const NAME_MAX = 12;
 
@@ -17,7 +18,7 @@ export function runStartFlow(root, { save }) {
         : '';
       return `
         <div class="start">
-          <div class="start-logo" aria-hidden="true">🏢</div>
+          <div class="start-logo" aria-hidden="true">${spriteImg('player')}</div>
           <h1>上班模擬器</h1>
           <p class="muted">Office Life Simulator</p>
           <div class="start-actions">

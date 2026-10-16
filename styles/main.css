@@ -1,4 +1,9 @@
-/* 點陣風介面（DESIGN.md §13.1）：粗實線邊框、不用圓角、硬陰影。點陣字型在 M4 加入 */
+/* 點陣風介面（DESIGN.md §13.1）：粗實線邊框、不用圓角、硬陰影、點陣字型 */
+@font-face {
+  font-family: "Cubic 11";
+  src: url("../fonts/Cubic_11.woff2") format("woff2");
+  font-display: swap;
+}
 :root {
   --bg: #f4efe6;
   --surface: #fffdf8;
@@ -18,7 +23,7 @@
   --season-winter: #dfe3ea;
   --border: 3px;
   --shadow: 4px;
-  --font: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
+  --font: "Cubic 11", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
   color-scheme: light dark;
 }
 
@@ -220,47 +225,50 @@ h3 { margin: 16px 0 8px; font-size: 16px; }
 /* 主角說的話、人資和主管的對話 */
 .speech { margin: 12px 0 0; padding: 10px 12px; border: 2px solid var(--ink); background: var(--bg); }
 
-/* 「今天」的場景（M4 換成點陣圖） */
-.scene {
+/* 點陣圖：整數倍放大才銳利（--px 場景、--pp 主角與圖示） */
+:root { --px: 5; --pp: 4; }
+@media (max-width: 369px) { :root { --px: 4; --pp: 3; } }
+.px {
+  display: block;
+  width: calc(var(--w) * var(--pp) * 1px);
+  height: calc(var(--h) * var(--pp) * 1px);
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* 「今天」的場景（DESIGN.md §13.1） */
+.scene { margin-bottom: 16px; }
+.scene-stage {
   position: relative;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-areas: "place bubble" "place player" "label label";
-  align-items: end;
-  height: 180px;
-  margin-bottom: 16px;
-  padding: 12px 14px;
+  width: calc(64px * var(--px));
+  height: calc(40px * var(--px));
+  margin: 0 auto;
   border: var(--border) solid var(--ink);
   box-shadow: var(--shadow) var(--shadow) 0 var(--ink);
+  box-sizing: content-box;
+  overflow: hidden;
 }
-.sky-spring { background: var(--season-spring); }
-.sky-summer { background: var(--season-summer); }
-.sky-autumn { background: var(--season-autumn); }
-.sky-winter { background: var(--season-winter); }
-.scene-sky { position: absolute; top: 8px; left: 12px; font-size: 22px; }
-.scene-place { grid-area: place; align-self: center; font-size: 56px; line-height: 1; text-align: center; }
+.scene-bg.px { width: calc(64px * var(--px)); height: calc(40px * var(--px)); }
 .scene-player {
-  grid-area: player;
-  position: relative;
-  justify-self: center;
-  min-width: 64px;
-  min-height: 64px;
+  position: absolute;
+  left: calc(37px * var(--px));
+  bottom: calc(1px * var(--px));
   padding: 0;
   border: 0;
   background: none;
-  font-size: 52px;
-  line-height: 1;
   cursor: pointer;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
 }
 .scene-player:active { transform: translateY(2px); }
-.scene-status { position: absolute; top: -14px; right: -6px; font-size: 24px; }
+.scene-status { position: absolute; top: 0; right: calc(-1px * var(--pp)); }
 .scene-bubble {
-  grid-area: bubble;
-  justify-self: center;
-  max-width: 100%;
-  margin-bottom: 8px;
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  max-width: 62%;
   padding: 4px 8px;
   border: 2px solid var(--ink);
   background: var(--surface);
@@ -271,7 +279,7 @@ h3 { margin: 16px 0 8px; font-size: 16px; }
   text-align: center;
 }
 .scene-bubble.is-milestone { background: var(--energy); color: #2b2433; }
-.scene-label { grid-area: label; margin-top: 6px; text-align: center; font-weight: 700; }
+.scene-label { margin: 8px 0 0; text-align: center; font-weight: 700; }
 
 /* 今晚的選擇 */
 .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 8px; }
@@ -368,7 +376,7 @@ h3 { margin: 16px 0 8px; font-size: 16px; }
   padding: 32px 16px calc(32px + env(safe-area-inset-bottom));
   text-align: center;
 }
-.start-logo { font-size: 72px; line-height: 1.2; margin-bottom: 12px; }
+.start-logo { display: flex; justify-content: center; margin-bottom: 12px; }
 .start-actions { margin-top: 24px; }
 .name-row { display: flex; gap: 8px; margin-top: 16px; }
 
