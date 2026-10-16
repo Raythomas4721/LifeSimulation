@@ -6,7 +6,7 @@ import { applyWorkday, clampVitals, performanceMultiplier } from '../systems/wor
 import { applyDailyIncome, applyMonthStart } from '../systems/finance.js';
 import { leaveOn, processStatuses } from '../systems/statuses.js';
 import { checkCollapse, onStatusEnded, resetHealthYear, sickPayRate } from '../systems/health.js';
-import { annualReview, yearEndBonus } from '../systems/annual.js';
+import { annualReview } from '../systems/annual.js';
 import { rollEvent } from '../systems/events.js';
 import { checkMilestones } from '../systems/milestones.js';
 import { checkReview } from '../systems/review.js';
@@ -33,9 +33,8 @@ export function advanceDay(state, rng) {
   clampVitals(state);
   checkCollapse(state);
 
-  // 4. 固定日期
+  // 4. 固定日期：1/1 考核與年終、每月 1 日繳生活費、12/31 年度回顧
   if (cal.month === 1 && cal.date === 1) annualReview(state, rng);
-  if (cal.month === 1 && cal.date === 20) yearEndBonus(state);
   if (cal.date === 1) applyMonthStart(state);
   checkMilestones(state);
   checkReview(state);

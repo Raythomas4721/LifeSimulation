@@ -1,11 +1,10 @@
 // 進入點：載入存檔、啟動迴圈、掛上 UI
 import { SAVE, TIME } from './data/balance.js';
-import { SLOT_ACTIVITIES } from './data/schedule.js';
+import { SCHEDULE_PRESETS, SLOT_ACTIVITIES } from './data/schedule.js';
 import { createState } from './core/state.js';
 import { createRng, randomSeed } from './core/rng.js';
 import { createLoop } from './core/loop.js';
 import { advanceDay } from './core/advance.js';
-import { calendarOf, slotIndex } from './core/calendar.js';
 import { clearSave, decodeSaveCode, encodeSaveCode, readSave, toSave, writeSave } from './core/save.js';
 import { clampVitals } from './systems/work.js';
 import { resolveReview } from './systems/review.js';
@@ -49,13 +48,18 @@ const ctl = {
     game.state.schedule[index] = activity;
     save();
   },
-  setTonight(activity) {
-    ctl.setSlot(slotIndex(calendarOf(game.state.day).weekday), activity);
-    session.tutorial?.notify('tonight');
-  },
   toggleSlot(index) {
     ctl.setSlot(index, nextActivity(game.state.schedule[index]));
+    session.tutorial?.notify('schedule');
   },
+  applyPreset(id) {
+    const preset = SCHEDULE_PRESETS.find(p => p.id === id);
+    if (!preset?.schedule) return;
+    game.state.schedule = [...preset.schedule];
+    save();
+    session.tutorial?.notify('schedule');
+  },
+
   resolveReview(schedule) {
     if (game.state.pending?.kind !== 'review') return;
     if (schedule && (schedule.length !== 7 || !schedule.every(id => SLOT_IDS.includes(id)))) return;

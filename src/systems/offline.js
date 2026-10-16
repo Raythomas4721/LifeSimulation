@@ -1,4 +1,4 @@
-// 離線推進（DESIGN.md §5.3）：固定 ×1 速度、最多 12 遊戲週
+// 離線推進（DESIGN.md §5.3）：固定 ×1 速度、最多 1 遊戲年
 // 一般卡片照預設選項處理並記進摘要；遇到重大抉擇就停，等玩家回來決定
 import { OFFLINE, TIME } from '../data/balance.js';
 import { advanceDay } from '../core/advance.js';
@@ -43,7 +43,7 @@ export function runOffline(state, rng, awayMs) {
   const summary = {
     kind: 'away',
     awayMs,
-    capped: !stopped && ran === OFFLINE.maxDays && awayMs > OFFLINE.maxDays * TIME.msPerDay, // 真的碰到 12 週上限才提
+    capped: !stopped && ran === OFFLINE.maxDays && awayMs > OFFLINE.maxDays * TIME.msPerDay, // 真的碰到上限才提
     days: ran,
     from: before,
     to: stats(state),
@@ -51,7 +51,8 @@ export function runOffline(state, rng, awayMs) {
     reviews,
     stopped,
   };
-  pushCardFront(state, summary);
+  // 只離開一下、什麼事都沒發生時不跳摘要，免得切個分頁就多一張卡片
+  if (ran >= OFFLINE.minSummaryDays || happened.length || stopped) pushCardFront(state, summary);
   return summary;
 }
 

@@ -79,7 +79,7 @@ function noticeCard(p, state) {
 // 你不在的時候（§5.3）：離開多久、過了幾天、數值怎麼變、發生了哪些事
 function awayCard(p) {
   const { from, to } = p;
-  const weeks = p.days >= 14 ? `（約 ${Math.round(p.days / 7)} 週）` : '';
+  const span = p.days >= 60 ? `（約 ${Math.round(p.days / 30)} 個月）` : p.days >= 14 ? `（約 ${Math.round(p.days / 7)} 週）` : '';
   const rows = [
     ['存款', `${formatMoney(from.money)} → ${formatMoney(to.money)}`],
     ['體力', `${Math.round(from.energy)} → ${Math.round(to.energy)}`],
@@ -91,7 +91,7 @@ function awayCard(p) {
   if (p.reviews) items.push(`📋 檢討 ${p.reviews} 次，行程都照舊`);
   return `
     <h2 id="card-title">🌙 你不在的時候</h2>
-    <p class="muted">你離開了 ${formatDuration(p.awayMs)}，時間過了 ${p.days} 天${weeks}${p.capped ? '；離開再久，最多也只推進 12 週' : ''}。</p>
+    <p class="muted">你離開了 ${formatDuration(p.awayMs)}，時間過了 ${p.days} 天${span}${p.capped ? '；離開再久，最多也只推進 1 年' : ''}。</p>
     <dl class="kv">${rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>
     <h3>發生了這些事</h3>
     ${items.length ? `<ul class="changes">${items.map(t => `<li>${t}</li>`).join('')}</ul>` : '<p class="muted">平平淡淡，什麼事都沒發生。</p>'}

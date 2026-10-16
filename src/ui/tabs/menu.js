@@ -34,7 +34,7 @@ export function render({ ctl }) {
     <section class="card">
       <h2>關於</h2>
       <p>上班模擬器（Office Life Simulator）v0.1 開發中</p>
-      <p class="muted">離開遊戲時時間照樣會走（最多 12 週），回來會看到「你不在的時候」。按暫停再離開，時間就不會走。</p>
+      <p class="muted">離開遊戲時時間照樣會走（最多 1 年），回來會看到「你不在的時候」。按暫停再離開，時間就不會走。</p>
       ${ctl.debug ? '<p class="muted">除錯模式已開啟：底部的 🐞 是除錯面板。</p>' : ''}
     </section>`;
 }

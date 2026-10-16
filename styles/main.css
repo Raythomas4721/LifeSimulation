@@ -12,16 +12,10 @@
   --mood: #d0608a;
   --perf: #3c8d5a;
   --money: #2f7d4f;
-  --sky-dawn: #f6d2b0;
-  --sky-day: #cfe3f2;
-  --sky-dusk: #e9a98f;
-  --sky-night: #2c3350;
-  --sky-night-ink: #f1ecff;
-  --part-commute: #d9d2c3;
-  --part-work: #9fb6e6;
-  --part-rest: #a8d5b5;
-  --part-overtime: #e8a07a;
-  --part-sleep: #6b6890;
+  --season-spring: #f6d6de;
+  --season-summer: #cfe3f2;
+  --season-autumn: #f0d2a8;
+  --season-winter: #dfe3ea;
   --border: 3px;
   --shadow: 4px;
   --font: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
@@ -42,15 +36,10 @@
     --mood: #e07aa0;
     --perf: #5cb27b;
     --money: #6cc28d;
-    --sky-dawn: #5a4a52;
-    --sky-day: #3a4a5c;
-    --sky-dusk: #5a3f4f;
-    --sky-night: #12162a;
-    --part-commute: #4a4658;
-    --part-work: #3d5288;
-    --part-rest: #3d6b4c;
-    --part-overtime: #8a4f35;
-    --part-sleep: #2b2945;
+    --season-spring: #5a3f4a;
+    --season-summer: #2f4658;
+    --season-autumn: #5a4630;
+    --season-winter: #3a3f4c;
   }
 }
 
@@ -156,36 +145,26 @@ p:last-child { margin-bottom: 0; }
 .money { font-size: 24px; font-weight: 800; color: var(--money); font-variant-numeric: tabular-nums; }
 .wage { font-size: 13px; color: var(--muted); }
 
-/* 時鐘與今天的時間軸 */
-.daybar { margin-top: 6px; }
-.daybar-info { display: flex; align-items: baseline; gap: 8px; font-size: 14px; }
-.daybar-clock { font-size: 18px; font-variant-numeric: tabular-nums; }
-.daybar-track { position: relative; height: 22px; margin-top: 2px; border: 2px solid var(--ink); }
-.daybar-parts { display: flex; height: 100%; }
-.daybar-part {
-  overflow: hidden;
-  border-right: 2px solid var(--ink);
-  font-size: 11px;
-  font-weight: 700;
-  line-height: 18px;
-  text-align: center;
-  white-space: nowrap;
-  color: var(--ink);
-}
-.daybar-part:last-child { border-right: 0; }
-.part-commute { background: var(--part-commute); }
-.part-work { background: var(--part-work); }
-.part-rest { background: var(--part-rest); }
-.part-overtime { background: var(--part-overtime); }
-.part-sleep { background: var(--part-sleep); color: #f1ecff; }
-/* 已經過去的時間蓋上一層半透明，右邊的粗線就是「現在」 */
-.daybar-elapsed {
+/* 季節與年度進度 */
+.yearbar { margin-top: 6px; }
+.yearbar-info { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; font-size: 14px; white-space: nowrap; overflow: hidden; }
+.yearbar-info .muted { overflow: hidden; text-overflow: ellipsis; font-size: 12px; }
+.yearbar-track { position: relative; height: 20px; margin-top: 2px; border: 2px solid var(--ink); }
+.yearbar-months { display: grid; grid-template-columns: repeat(12, 1fr); height: 100%; }
+.yearbar-months span { border-right: 1px solid var(--ink); font-size: 10px; line-height: 16px; text-align: center; color: var(--ink); }
+.yearbar-months span:last-child { border-right: 0; }
+.season-spring { background: var(--season-spring); }
+.season-summer { background: var(--season-summer); }
+.season-autumn { background: var(--season-autumn); }
+.season-winter { background: var(--season-winter); }
+/* 已經過去的部分蓋上一層半透明，右邊的粗線就是「現在」 */
+.yearbar-elapsed {
   position: absolute;
   top: 0;
   bottom: 0;
   left: 0;
   border-right: 3px solid var(--danger);
-  background: rgba(0, 0, 0, 0.28);
+  background: rgba(0, 0, 0, 0.25);
   pointer-events: none;
 }
 
@@ -254,10 +233,10 @@ h3 { margin: 16px 0 8px; font-size: 16px; }
   border: var(--border) solid var(--ink);
   box-shadow: var(--shadow) var(--shadow) 0 var(--ink);
 }
-.sky-dawn { background: var(--sky-dawn); }
-.sky-day { background: var(--sky-day); }
-.sky-dusk { background: var(--sky-dusk); }
-.sky-night { background: var(--sky-night); color: var(--sky-night-ink); }
+.sky-spring { background: var(--season-spring); }
+.sky-summer { background: var(--season-summer); }
+.sky-autumn { background: var(--season-autumn); }
+.sky-winter { background: var(--season-winter); }
 .scene-sky { position: absolute; top: 8px; left: 12px; font-size: 22px; }
 .scene-place { grid-area: place; align-self: center; font-size: 56px; line-height: 1; text-align: center; }
 .scene-player {
@@ -436,3 +415,12 @@ h3 { margin: 16px 0 8px; font-size: 16px; }
 .start .input.code { text-align: left; }
 .error { margin-top: 8px; color: var(--danger); font-weight: 700; }
 .error:empty { display: none; }
+
+
+/* 每週行程卡片 */
+.preset-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 4px 0 10px; padding: 0 6px; }
+.preset-row .btn { padding: 6px 4px; font-size: 14px; box-shadow: 2px 2px 0 var(--ink); }
+.legend { margin: 8px 6px 0; padding: 0; list-style: none; font-size: 13px; color: var(--muted); }
+.legend li { padding: 2px 0; }
+.forecast { margin: 8px 6px 0; font-size: 14px; font-weight: 700; }
+.card-tight .note { margin: 0 6px 8px; }

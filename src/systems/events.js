@@ -1,7 +1,7 @@
 // 事件系統（DESIGN.md §10）：每天開始時擲骰，跳出事件卡片；玩家選擇後顯示結果
 import { EVENTS } from '../data/balance.js';
 import { EVENT_LIST, EVENTS_BY_ID } from '../data/events.js';
-import { calendarOf, isWeekend } from '../core/calendar.js';
+import { calendarOf, dayOfDate, isWeekend } from '../core/calendar.js';
 import { addLog } from '../core/state.js';
 import { pushCard } from './cards.js';
 import { applyEffects, diff, snapshot } from './effects.js';
@@ -20,21 +20,49 @@ const cooledDown = (state, e) => {
 
 const weightOf = (e, state, c) => (typeof e.weight === 'function' ? e.weight(state, c) : e.weight ?? EVENTS.weight);
 
-// 劇情事件（有 on 的）：on.day 是開局後第幾天、只出現一次；on.month + on.date 是每年那天，once 時只出現一次
-function scriptedToday(state, c) {
-  return EVENT_LIST.filter(e => {
-    if (!e.on) return false;
-    const seen = state.events.counts[e.id] > 0;
-    const hit = e.on.day != null ? state.day === e.on.day : c.month === e.on.month && c.date === e.on.date;
-    return hit && !((e.on.day != null || e.once) && seen) && (!e.condition || e.condition(state, c));
-  });
+// 劇情與節日（有 on 的事件）最早可以出現的日子，不考慮間隔；沒有就回傳 null（§10.2）
+// - on.day：開局後第幾天的劇情，只出現一次；被間隔擋住就往後延，一定會出現
+// - on.month + on.date：每年的節日，可以延後 holidayWindowDays 天，再排不進去就跳過那一年
+// due 是原本該出現的日子，同一天有好幾件時先處理原本比較早的
+// from 是最早能出現的日子（預告用：扣掉事件間隔後才可能出現）
+export function scheduledDay(e, state, from = state.day) {
+  const seen = (state.events.counts[e.id] ?? 0) > 0;
+  if (e.on.day != null) return seen ? null : { day: Math.max(e.on.day, from), due: e.on.day };
+  if (e.once && seen) return null;
+  const { year } = calendarOf(state.day);
+  const last = state.events.last[e.id] ?? -Infinity;
+  for (const y of [year, year + 1, year + 2]) {
+    const start = dayOfDate(y, e.on.month, e.on.date);
+    if (start < 0) continue; // 開局前的節日不算
+    if (from > start + EVENTS.holidayWindowDays || last >= start) continue;
+    if (start - last < EVENTS.holidayCooldownDays) continue; // 節日隔一年再出現，降低重複感
+    const day = Math.max(start, from);
+    if (e.condition && !e.condition({ ...state, day }, eventCalendar(day))) continue;
+    return { day, due: start, holiday: true };
+  }
+  return null;
 }
 
-// 在新的一天開始時呼叫：劇情事件一定出現（卡片排隊）；隨機事件在已經有卡片在等時不再疊
+// 依可以出現的日子排序；同一天有好幾件時，新人劇情優先（和第一年的時間點綁在一起），節日其次
+function scheduledList(state, from) {
+  return EVENT_LIST.filter(e => e.on)
+    .map(e => ({ event: e, ...scheduledDay(e, state, from) }))
+    .filter(x => x.day != null)
+    .sort((a, b) => a.day - b.day || Number(Boolean(a.holiday)) - Number(Boolean(b.holiday)) || a.due - b.due);
+}
+
+export const nextScheduled = (state, from = state.day) => scheduledList(state, from)[0] ?? null;
+
+// 在新的一天開始時呼叫。兩個事件至少隔 minGapDays 天；劇情與節日優先，
+// 隨機事件只拿來填長空檔，快到劇情或節日時會讓位
 export function rollEvent(state, rng) {
+  if (state.day - (state.events.lastDay ?? -Infinity) < EVENTS.minGapDays) return;
+  const next = nextScheduled(state);
+  if (next && next.day <= state.day) return triggerEvent(state, next.event.id);
+  if (state.pending) return;
+  if (next && next.day - state.day < EVENTS.minGapDays) return;
+  if (rng.next() >= EVENTS.dailyChance) return;
   const c = eventCalendar(state.day);
-  for (const e of scriptedToday(state, c)) triggerEvent(state, e.id);
-  if (state.pending || rng.next() >= EVENTS.dailyChance) return;
   const pool = EVENT_LIST.filter(e => !e.followUp && !e.on && cooledDown(state, e) && (!e.condition || e.condition(state, c)));
   if (!pool.length) return;
   const weights = pool.map(e => weightOf(e, state, c));
@@ -44,8 +72,10 @@ export function rollEvent(state, rng) {
 }
 
 export function triggerEvent(state, id) {
+  state.events.lastDay = state.day;
   state.events.last[id] = state.day;
   state.events.counts[id] = (state.events.counts[id] ?? 0) + 1;
+  if (state.period) state.period.events = (state.period.events ?? 0) + 1;
   pushCard(state, { kind: 'event', id, step: 'choose' });
 }
 

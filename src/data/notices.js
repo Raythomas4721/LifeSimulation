@@ -6,6 +6,7 @@ export const NOTICES = {
     lines: d => [
       `考核結果：${d.grade}${d.trial ? '（試用期固定為 B）' : ''}`,
       d.raise > 0 ? `加薪 ${(d.raise * 100).toFixed(1)}%` : '這次沒有加薪。',
+      d.bonusMonths != null ? `年終 ${d.bonusMonths} 個月${d.prorated ? '（未滿一年，依在職月數按比例）' : ''}` : null,
       d.offer ? `主管：「想升你當『${d.offer.title}』，你覺得呢？」` : null,
     ],
     actions: d =>

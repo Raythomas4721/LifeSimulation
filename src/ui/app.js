@@ -73,7 +73,7 @@ export function mountApp(root, ctl) {
     switch (action) {
       case 'tab': return showTab(value);
       case 'speed': ctl.setSpeed(Number(value)); break;
-      case 'tonight': ctl.setTonight(value); break;
+      case 'preset': ctl.applyPreset(value); break;
       case 'toggleSlot': ctl.toggleSlot(Number(index)); break;
       case 'save': ctl.saveNow(); break;
       case 'restart':
