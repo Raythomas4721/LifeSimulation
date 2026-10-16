@@ -55,6 +55,19 @@ export const STUDY = {
   passRate: 0.7, // 出席率達到這個比例才算結業
 };
 
+// 考試（§9.1）：通過率 = 基礎 + 技能 + 出席 + 考前狀態，限制在 5%～95%
+export const EXAM = {
+  base: 0.3,
+  perSkillPoint: 0.006, // 相關技能每 10 點 +6%
+  attendanceBonus: 0.2, // 出席率達 70%
+  goodState: 0.1, // 考前體力、心情都 ≥ 50
+  badState: -0.2, // 考前體力或心情 < 20
+  cramBonus: 0.1, // 考前熬夜衝刺
+  cramEnergy: -15,
+  min: 0.05,
+  max: 0.95,
+};
+
 export const THRESHOLDS = {
   low: 20, // 體力或心情低於此值，工作表現累積減半
   lowPenalty: 0.5,

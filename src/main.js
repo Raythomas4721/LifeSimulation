@@ -14,7 +14,7 @@ import { autoResolve } from './systems/auto.js';
 import { runOffline } from './systems/offline.js';
 import { acceptPromotion, declinePromotion } from './systems/annual.js';
 import { presetSchedule } from './systems/schedule.js';
-import { dropCourse, enrollCourse } from './systems/study.js';
+import { dropCourse, enrollCourse, takeExam } from './systems/study.js';
 import { mountApp } from './ui/app.js';
 import { runStartFlow } from './ui/start.js';
 import { createTutorial } from './ui/tutorial.js';
@@ -82,11 +82,12 @@ const ctl = {
     closeCard(game.state);
     save();
   },
-  // 通知卡片上的選項：升遷抉擇、出院後繼續
+  // 通知卡片上的選項：升遷抉擇、考前一晚、出院後繼續
   noticeAction(id) {
     if (game.state.pending?.kind !== 'notice') return;
     if (id === 'acceptPromotion') acceptPromotion(game.state);
     if (id === 'declinePromotion') declinePromotion(game.state);
+    if (id === 'examSleep' || id === 'examCram') takeExam(game.state, game.rng, id === 'examCram');
     closeCard(game.state);
     save();
   },

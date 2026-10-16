@@ -28,7 +28,9 @@ export function collapse(state, from) {
   pushCard(state, { kind: 'notice', id: 'collapse', deltas: diff(before, snapshot(state)) });
 }
 
-function hospitalize(state, from) {
+// 同一年病倒 3 次，或重症事件直接住院
+export function hospitalize(state, from) {
+  if (leaveOn(state, from)?.type === 'hospital') return;
   const before = snapshot(state);
   applyEffects(state, {
     money: -HEALTH.hospitalMedical,

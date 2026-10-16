@@ -1,7 +1,7 @@
 // service worker（DESIGN.md §14.5）：先拿快取（cache-first），沒有才上網抓，加入主畫面後可以離線玩
 // 下面這段由 tools/update-sw.js 產生；改了任何遊戲檔案後重跑，版本號會跟著內容變，玩家才會拿到新版
 // <generated>
-const VERSION = 'de3c48c8';
+const VERSION = '528653cd';
 const ASSETS = [
   './',
   'fonts/Cubic_11.woff2',
@@ -20,6 +20,7 @@ const ASSETS = [
   'src/data/cast.js',
   'src/data/courses.js',
   'src/data/events-first-year.js',
+  'src/data/events-study.js',
   'src/data/events.js',
   'src/data/jobs.js',
   'src/data/milestones.js',

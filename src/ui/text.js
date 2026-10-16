@@ -5,6 +5,7 @@ import { MILESTONES } from '../data/milestones.js';
 import { SCHEDULE_PRESETS, SLOT_ACTIVITIES, SLOT_SHORT } from '../data/schedule.js';
 import { EVENTS_BY_ID } from '../data/events.js';
 import { COURSES_BY_ID } from '../data/courses.js';
+import { SKILL_LABELS } from '../data/skills.js';
 import { formatDate, formatMoney, formatMonths, formatSigned } from './format.js';
 
 export const activityOf = id => SLOT_ACTIVITIES.find(a => a.id === id);
@@ -40,9 +41,11 @@ const LOG_TEXT = {
   coursePass: e => `🎓 ${courseTitle(e)}結業了！`,
   courseFail: e => `${courseTitle(e)}出席不夠，沒有結業。`,
   courseDrop: e => `退掉了${courseTitle(e)}。`,
+  examPass: e => `🏅 考過${courseTitle(e)}，拿到證照！`,
+  examFail: e => `${courseTitle(e)}沒有考過。`,
 };
 
-const STAT_LABELS = { money: '存款', energy: '體力', mood: '心情', performance: '工作表現' };
+const STAT_LABELS = { money: '存款', energy: '體力', mood: '心情', performance: '工作表現', fitness: '體能', ...SKILL_LABELS };
 
 // 數值變化的條列文字，例如「心情 −3」「存款 −NT$ 60」
 export function deltaItems(deltas = {}) {

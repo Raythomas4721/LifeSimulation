@@ -5,7 +5,7 @@ import { advanceDay } from '../src/core/advance.js';
 import { createRng } from '../src/core/rng.js';
 import { calendarOf } from '../src/core/calendar.js';
 import { autoResolve } from '../src/systems/auto.js';
-import { enrollCourse } from '../src/systems/study.js';
+import { enrollBlocker, enrollCourse } from '../src/systems/study.js';
 import { LADDER } from '../src/data/jobs.js';
 import { EVENT_LIST } from '../src/data/events.js';
 
@@ -13,7 +13,7 @@ const YEARS = Number(process.argv[2] ?? 10);
 const SEED = Number(process.argv[3] ?? 12345);
 
 // overtime／exercise：哪幾格加班、運動（0 = 週一）
-// study：管理不夠升下一級時報名主管培訓班，上課期間把這幾格改成進修
+// study：管理不夠升下一級時報名課程（能報 PMP 就先報，否則主管培訓班），上課期間把這幾格改成進修
 const STRATEGIES = [
   { name: '不加班', overtime: [] },
   { name: '不加班＋上課', overtime: [], study: [1, 3] },
@@ -37,7 +37,8 @@ function scheduleFor(state, { overtime, study = [], exercise = [] }) {
 function planStudy(state) {
   if (state.study.course) return;
   const next = LADDER.find(l => l.level === state.job.level + 1);
-  if (state.skills.management < (next?.skills?.management ?? 0)) enrollCourse(state, 'leadership');
+  if (state.skills.management >= (next?.skills?.management ?? 0)) return;
+  enrollCourse(state, enrollBlocker(state, 'pmp') ? 'leadership' : 'pmp');
 }
 
 function simulate(strategy) {
@@ -66,6 +67,8 @@ function simulate(strategy) {
       專業: Math.floor(state.skills.professional),
       體能: Math.floor(state.fitness),
       上課: Object.values(state.study.done).reduce((a, b) => a + b, 0),
+      證照: Object.keys(state.study.certs).join(' ') || '—',
+      重症: (state.events.counts.stomach_ulcer ?? 0) + (state.events.counts.palpitation ?? 0),
     },
   };
 }

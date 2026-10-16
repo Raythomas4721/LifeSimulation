@@ -1,5 +1,5 @@
 // 系統通知卡片的文字（考核、年終、病倒、住院、出院、課程結業）。d 是發出通知時記下的資料
-import { COURSES_BY_ID } from './courses.js';
+import { CERTS, COURSES_BY_ID } from './courses.js';
 import { SKILL_LABELS } from './skills.js';
 
 const gainText = gain => Object.entries(gain).map(([id, n]) => `${SKILL_LABELS[id]} +${n}`).join('、');
@@ -7,6 +7,7 @@ const gainText = gain => Object.entries(gain).map(([id, n]) => `${SKILL_LABELS[i
 const missingText = m => `升${m.title}還差${m.skills.map(s => `${SKILL_LABELS[s.id]} ${s.short}`).join('、')}，可以去「職涯」分頁報名課程。`;
 
 // actions 可以是函式，依資料決定要給哪些選項；沒有 actions 就只有一顆「好」
+// 有選項的通知是重大抉擇，離線時停下來等玩家；minor: true 的不是，離線時自動選預設（考試是早點睡）
 export const NOTICES = {
   review: {
     title: d => `${d.year} 年度考核`,
@@ -43,6 +44,27 @@ export const NOTICES = {
       `出席 ${d.attended} / ${d.required} 次（${Math.round((d.attended / d.required) * 100)}%）。`,
       d.passed ? `結業！${gainText(COURSES_BY_ID[d.id].gain)}。` : '出席率不到 70%，這次沒有結業，學費也不會退。',
     ],
+  },
+  exam: {
+    title: d => `明天就要考${COURSES_BY_ID[d.id].title}了`,
+    lines: d => [
+      d.ready ? '課都有去上，準備得還算充分。' : '課缺了不少，有點心虛…',
+      '今晚要怎麼過？（按鈕下方是通過機率）',
+    ],
+    minor: true,
+    actions: () => [
+      { id: 'examSleep', label: '早點睡，保持狀態' },
+      { id: 'examCram', label: '熬夜衝刺' },
+    ],
+  },
+  examResult: {
+    title: d => `${COURSES_BY_ID[d.id].title}放榜`,
+    lines: d => {
+      const cert = CERTS[COURSES_BY_ID[d.id].exam.cert];
+      return d.passed
+        ? [`考過了！拿到${cert.emoji} ${cert.title}。`, '公司發了證照獎金。']
+        : [`差一點…這次沒有考過（通過機率 ${Math.round(d.chance * 100)}%）。`, '可以再報名一次，下次加油。'];
+    },
   },
   discharge: {
     title: () => '出院了',

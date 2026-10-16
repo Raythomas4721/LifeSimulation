@@ -1,8 +1,9 @@
 // 進修與技能（DESIGN.md §6、§9.1）：報名課程、出席、結業；技能一律透過 addSkill 增加
-import { SKILLS, STUDY } from '../data/balance.js';
+import { EXAM, SKILLS, STUDY } from '../data/balance.js';
 import { COURSES_BY_ID } from '../data/courses.js';
 import { addLog } from '../core/state.js';
 import { pushCard } from './cards.js';
+import { applyEffects } from './effects.js';
 
 export function addSkill(state, id, amount) {
   state.skills[id] = Math.min(SKILLS.max, Math.max(0, state.skills[id] + amount));
@@ -16,7 +17,8 @@ export function enrollBlocker(state, id) {
   const c = COURSES_BY_ID[id];
   if (state.study.course) return '一次只能上一門課';
   if (c.minLevel && state.job.level < c.minLevel) return '資深專員以上才能報名';
-  if (!c.repeat && state.study.done[id]) return '已經上過了';
+  if (c.exam && state.study.certs[c.exam.cert]) return '已經考到證照了';
+  if (!c.exam && !c.repeat && state.study.done[id]) return '已經上過了';
   if (state.money < c.cost) return '存款不夠繳學費';
   return null;
 }
@@ -59,6 +61,39 @@ export function checkCourse(state) {
     state.study.done[course.id] = (state.study.done[course.id] ?? 0) + 1;
   }
   state.study.course = null;
+  const attended = Math.min(course.attended, required);
   addLog(state, { kind: passed ? 'coursePass' : 'courseFail', id: course.id });
-  pushCard(state, { kind: 'notice', id: 'course', data: { id: course.id, passed, attended: Math.min(course.attended, required), required } });
+  pushCard(state, { kind: 'notice', id: 'course', data: { id: course.id, passed, attended, required } });
+  // 考試課程結束後接著考試（§9.1）；出席不夠也能考，只是少了出席加成
+  if (c.exam) pushCard(state, { kind: 'notice', id: 'exam', data: { id: course.id, ready: passed } });
+}
+
+// 考試通過率；cram 是考前熬夜衝刺（體力先扣掉再算狀態）
+export function examChance(state, data, cram = false) {
+  const c = COURSES_BY_ID[data.id];
+  const energy = state.vitals.energy + (cram ? EXAM.cramEnergy : 0);
+  const { mood } = state.vitals;
+  let p = EXAM.base + state.skills[c.exam.skill] * EXAM.perSkillPoint;
+  if (data.ready) p += EXAM.attendanceBonus;
+  if (energy >= 50 && mood >= 50) p += EXAM.goodState;
+  if (energy < 20 || mood < 20) p += EXAM.badState;
+  if (cram) p += EXAM.cramBonus;
+  return Math.min(EXAM.max, Math.max(EXAM.min, p));
+}
+
+// 考試卡片上的抉擇：熬夜衝刺或早點睡，接著跳出放榜卡片
+export function takeExam(state, rng, cram) {
+  const card = state.pending;
+  if (card?.kind !== 'notice' || card.id !== 'exam') return;
+  const c = COURSES_BY_ID[card.data.id];
+  const chance = examChance(state, card.data, cram);
+  if (cram) applyEffects(state, { energy: EXAM.cramEnergy });
+  const passed = rng.next() < chance;
+  if (passed) {
+    state.study.certs[c.exam.cert] = state.day;
+    applyEffects(state, { money: c.exam.bonus });
+  }
+  addLog(state, { kind: passed ? 'examPass' : 'examFail', id: c.id });
+  // 放榜卡片排在下一張，關掉考試卡片後馬上看到
+  state.queue.unshift({ kind: 'notice', id: 'examResult', data: { id: c.id, passed, chance }, deltas: passed ? { money: c.exam.bonus } : undefined });
 }

@@ -4,6 +4,7 @@ import { closeCard } from './cards.js';
 import { chooseEvent, defaultChoice } from './events.js';
 import { resolveReview } from './review.js';
 import { acceptPromotion, declinePromotion } from './annual.js';
+import { takeExam } from './study.js';
 
 export function autoResolve(state, rng, { promotion = 'accept' } = {}) {
   const card = state.pending;
@@ -14,5 +15,6 @@ export function autoResolve(state, rng, { promotion = 'accept' } = {}) {
     if (promotion === 'accept') acceptPromotion(state);
     else declinePromotion(state);
   }
+  if (card.kind === 'notice' && card.id === 'exam') takeExam(state, rng, false); // 預設早點睡
   closeCard(state); // 事件結果、通知（出院時選「繼續」）
 }

@@ -1,4 +1,5 @@
 // 課程（DESIGN.md §9.1）。weeks × slots 是應出席次數；gain 是結業時加的技能
+// exam：課程結束後要考試，skill 影響通過率，考過拿到證照 cert 和獎金 bonus；考到證照後不能再報名
 export const COURSES = [
   {
     id: 'leadership',
@@ -33,6 +34,29 @@ export const COURSES = [
     gain: { programming: 20 },
   },
   {
+    id: 'toeic',
+    title: '多益檢定',
+    emoji: '📝',
+    desc: '兩個月的考前衝刺班，結束後直接上考場。考過拿到證照，公司發獎金。',
+    weeks: 9,
+    cost: 2_000,
+    slots: 2,
+    gain: { language: 5 },
+    exam: { skill: 'language', cert: 'toeic', bonus: 3_000 },
+  },
+  {
+    id: 'pmp',
+    title: 'PMP 專案管理',
+    emoji: '📋',
+    desc: '專案管理的國際證照，課程結束後考試。考過拿到證照，公司發獎金。',
+    weeks: 13,
+    cost: 30_000,
+    slots: 2,
+    gain: { management: 15 },
+    exam: { skill: 'management', cert: 'pmp', bonus: 10_000 },
+    minLevel: 2,
+  },
+  {
     id: 'mba',
     title: '在職專班（MBA）',
     emoji: '🎓',
@@ -46,3 +70,8 @@ export const COURSES = [
 ];
 
 export const COURSES_BY_ID = Object.fromEntries(COURSES.map(c => [c.id, c]));
+
+export const CERTS = {
+  toeic: { title: '多益證書', emoji: '📜' },
+  pmp: { title: 'PMP 證照', emoji: '🏅' },
+};

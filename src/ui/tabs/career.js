@@ -1,6 +1,6 @@
 import { LADDER } from '../../data/jobs.js';
 import { CAST } from '../../data/cast.js';
-import { COURSES, COURSES_BY_ID } from '../../data/courses.js';
+import { CERTS, COURSES, COURSES_BY_ID } from '../../data/courses.js';
 import { SKILL_LABELS, SKILL_LIST } from '../../data/skills.js';
 import { FITNESS } from '../../data/balance.js';
 import { monthsBetween } from '../../core/calendar.js';
@@ -32,6 +32,7 @@ export function render() {
     <section class="card">
       <h2>技能與體能</h2>
       <ul class="skills" data-block="skills"></ul>
+      <p data-block="certs"></p>
     </section>
     <section class="card">
       <h2>進修</h2>
@@ -81,6 +82,12 @@ export const blocks = {
     SKILL_LIST.map(s => skillRow(s.label, state.skills[s.id], s.use)).join('') +
     skillRow('體能', state.fitness, `靠運動累積、不運動會慢慢下降；體力上限 ${state.vitals.energyMax}，每晚睡覺多恢復 ${(state.fitness * FITNESS.sleepPerPoint).toFixed(1)}`),
 
+  certs: ({ state }) => {
+    const owned = Object.entries(state.study.certs);
+    if (!owned.length) return '<span class="muted">證照：還沒有。多益、PMP 課程結束後可以考。</span>';
+    return `證照：${owned.map(([id, day]) => `${CERTS[id].emoji} ${CERTS[id].title}（${formatDate(day, { weekday: false })}）`).join('、')}`;
+  },
+
   course: ({ state }) => {
     const c = state.study.course;
     if (!c) return '<p class="muted">目前沒有上課。沒報名時，行程裡的進修會變成自學，專業慢慢提升。</p>';
@@ -103,6 +110,7 @@ export const blocks = {
           <p><b>${c.emoji} ${c.title}</b>　${gain}</p>
           <p class="muted">${c.desc}</p>
           <p class="muted">約 ${courseLength(c.weeks)}・每週 ${c.slots} 格・學費 ${formatMoney(c.cost)}${done}</p>
+          ${c.exam ? `<p class="muted">結束後考試，考過拿到${CERTS[c.exam.cert].emoji} ${CERTS[c.exam.cert].title}和獎金 ${formatMoney(c.exam.bonus)}；${SKILL_LABELS[c.exam.skill]}越高越容易過</p>` : ''}${c.minLevel ? '<p class="muted">資深專員以上才能報名</p>' : ''}
           <button class="btn btn-block" data-action="courseEnroll" data-value="${c.id}"${blocker ? ' disabled' : ''}>${blocker ?? '報名'}</button>
         </li>`;
     }).join(''),
