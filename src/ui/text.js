@@ -2,17 +2,25 @@
 import { monthsBetween } from '../core/calendar.js';
 import { LADDER } from '../data/jobs.js';
 import { MILESTONES } from '../data/milestones.js';
-import { SLOT_ACTIVITIES, SLOT_SHORT } from '../data/schedule.js';
+import { SCHEDULE_PRESETS, SLOT_ACTIVITIES, SLOT_SHORT } from '../data/schedule.js';
 import { EVENTS_BY_ID } from '../data/events.js';
+import { COURSES_BY_ID } from '../data/courses.js';
 import { formatDate, formatMoney, formatMonths, formatSigned } from './format.js';
 
 export const activityOf = id => SLOT_ACTIVITIES.find(a => a.id === id);
-export const nextActivity = id => SLOT_ACTIVITIES[(SLOT_ACTIVITIES.findIndex(a => a.id === id) + 1) % SLOT_ACTIVITIES.length].id;
 export const milestoneText = id => MILESTONES.find(m => m.id === id).text;
+
+// 一鍵行程的按鈕；有報名課程時多一個「上課」
+export function schedulePresets(state) {
+  const course = state.study.course && COURSES_BY_ID[state.study.course.id];
+  return course ? [...SCHEDULE_PRESETS, { id: 'study', label: `上課：${course.slots} 天` }] : SCHEDULE_PRESETS;
+}
 
 export const jobTitle = state => LADDER.find(l => l.level === state.job.level).title;
 export const tenure = state => formatMonths(monthsBetween(state.job.startDay, state.day));
 export const totalYears = state => formatMonths(monthsBetween(0, state.day));
+
+const courseTitle = e => COURSES_BY_ID[e.id].title;
 
 const LOG_TEXT = {
   start: () => '第一天上班，成為專員。',
@@ -28,6 +36,10 @@ const LOG_TEXT = {
   collapse: () => '😵 病倒了，請假一週。',
   hospital: () => '🏥 住院了。',
   discharge: () => '出院了。',
+  courseEnroll: e => `📚 報名了${courseTitle(e)}，學費 ${formatMoney(e.cost)}。`,
+  coursePass: e => `🎓 ${courseTitle(e)}結業了！`,
+  courseFail: e => `${courseTitle(e)}出席不夠，沒有結業。`,
+  courseDrop: e => `退掉了${courseTitle(e)}。`,
 };
 
 const STAT_LABELS = { money: '存款', energy: '體力', mood: '心情', performance: '工作表現' };

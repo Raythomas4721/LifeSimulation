@@ -24,7 +24,35 @@ export const DAILY = {
   sleep: { energy: 8, mood: 0, performance: 0 }, // 每天都有，含週末與請假
   rest: { energy: 4, mood: 4, performance: 0 },
   overtime: { energy: -16, mood: -6, performance: 0.08 },
-  weekendMultiplier: 2,
+  slack: { energy: 0, mood: 8, performance: 0 }, // 耍廢：只補心情
+  study: { energy: -6, mood: -3, performance: 0 },
+  exercise: { energy: -4, mood: 2, performance: 0 },
+  weekendMultiplier: 2, // 週末一整天：效果、花費、出席、體能都加倍
+};
+
+// 技能（DESIGN.md §6）：每項 0～100
+export const SKILLS = {
+  max: 100,
+  workProfessional: 0.02, // 每個上班日，專業 +0.02（一年約 +5）
+  selfStudy: 0.1, // 沒報名課程時，一格進修自學的專業（每週 2 格一年約 +10）
+  professionalPerformance: 1 / 1000, // 工作表現累積 ×（1 + 專業 × 這個值），專業 100 時多 10%
+  managerFromLevel: 3, // 升上這個職級（主任）後，每年 1/1 管理再加
+  managerYearly: 3,
+};
+
+// 體能（§6）：靠運動累積，每天自然下降
+export const FITNESS = {
+  max: 100,
+  perSlot: 1,
+  dailyDecay: 0.15,
+  energyMaxPerPoint: 0.3, // 體力上限 = 100 + 體能 × 0.3
+  sleepPerPoint: 0.03, // 每晚睡覺多恢復 體能 × 0.03（體能 100 時 +3）
+  exerciseCost: 200, // 一格運動的花費（健身房、球場）
+};
+
+// 進修（§9.1）
+export const STUDY = {
+  passRate: 0.7, // 出席率達到這個比例才算結業
 };
 
 export const THRESHOLDS = {

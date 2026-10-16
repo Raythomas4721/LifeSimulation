@@ -13,10 +13,9 @@ export const binds = {};
 export const blocks = {
   card: ({ state }) => {
     const p = state.pending;
-    if (p?.kind !== 'review') review.resetDraft();
     if (!p) return '';
     const inner =
-      p.kind === 'review' ? review.reviewCard(p)
+      p.kind === 'review' ? review.reviewCard(p, state)
       : p.kind === 'event' ? eventCard(p)
       : p.kind === 'away' ? awayCard(p)
       : noticeCard(p, state);
