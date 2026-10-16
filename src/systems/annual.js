@@ -1,4 +1,4 @@
-// 年度考核、升遷（DESIGN.md §7.2、§7.3）與年終（§7.4）
+// 年度考核、升遷（DESIGN.md §7.2、§7.3）與年終（§7.4），都在 1/1 一起處理
 import { BONUS, REVIEW } from '../data/balance.js';
 import { LADDER } from '../data/jobs.js';
 import { calendarOf, monthsBetween } from '../core/calendar.js';
@@ -29,13 +29,23 @@ export function annualReview(state, rng) {
   const before = state.job.salary;
   state.job.salary = roundTo(salary, REVIEW.salaryRound);
   state.job.performance *= REVIEW.carryOver;
+
+  // 年終和考核一起發（§7.4），一張卡片看完；到職未滿一年按在職月數比例
+  const months = BONUS.months[grade];
+  const ratio = Math.min(1, monthsBetween(state.job.startDay, state.day) / 12);
+  const bonus = Math.round(state.job.salary * months * ratio);
+  applyEffects(state, { money: bonus });
+
   addLog(state, { kind: 'review', year, grade });
+  addLog(state, { kind: 'bonus', amount: bonus });
   pushCard(state, {
     kind: 'notice',
     id: 'review',
-    data: { year, grade, trial, raise, offer },
+    data: { year, grade, trial, raise, offer, bonusMonths: months, prorated: ratio < 1 },
     salary: { from: before, to: state.job.salary },
+    deltas: { money: bonus },
   });
+  if (grade === 'C') triggerEvent(state, 'year_end_bonus');
 }
 
 // 考核卡片上的升遷抉擇：接受就升一級、月薪再調升，之後平日上班更累
@@ -64,22 +74,4 @@ function canPromote(state, next, grade) {
   }
   const years = monthsBetween(state.job.levelStartDay, state.day) / 12;
   return years >= next.years && atLeast(grade, next.grade);
-}
-
-// 1/20 結算時呼叫：依最近一次考核發年終，未滿一年按在職月數比例
-export function yearEndBonus(state) {
-  const last = state.job.reviews[state.job.reviews.length - 1];
-  if (!last) return;
-  const months = BONUS.months[last.grade];
-  const ratio = Math.min(1, monthsBetween(state.job.startDay, state.day) / 12);
-  const amount = Math.round(state.job.salary * months * ratio);
-  applyEffects(state, { money: amount });
-  addLog(state, { kind: 'bonus', amount });
-  pushCard(state, {
-    kind: 'notice',
-    id: 'bonus',
-    data: { grade: last.grade, months, prorated: ratio < 1 },
-    deltas: { money: amount },
-  });
-  if (last.grade === 'C') triggerEvent(state, 'year_end_bonus');
 }

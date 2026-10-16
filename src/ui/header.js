@@ -1,9 +1,12 @@
-// 上方狀態列：年齡、日期、速度、時鐘與今天的時間軸、存款、體力、心情
+// 上方狀態列：年齡、日期、速度、季節與年度進度、下一件大事、存款、體力、心情
 import { TIME } from '../data/balance.js';
-import { ageOn } from '../core/calendar.js';
+import { seasonOf } from '../data/seasons.js';
+import { ageOn, calendarOf, yearProgress } from '../core/calendar.js';
 import { dailyWage } from '../systems/finance.js';
-import { partsOf, timeOf } from './daytime.js';
 import { formatDate, formatMoney, formatNumber } from './format.js';
+import { upcoming } from './upcoming.js';
+
+const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1);
 
 export function render() {
   return `
@@ -11,11 +14,13 @@ export function render() {
       <span class="status-date"><b data-bind="age"></b> ・ <span data-bind="date"></span></span>
       <div class="speed" data-block="speed"></div>
     </div>
-    <div class="daybar" data-tour="clock">
-      <div class="daybar-info"><b class="daybar-clock" data-bind="clock"></b><span data-bind="doing"></span></div>
-      <div class="daybar-track">
-        <div class="daybar-parts" data-block="dayparts"></div>
-        <i class="daybar-elapsed" data-bar="dayPct"></i>
+    <div class="yearbar" data-tour="year">
+      <div class="yearbar-info"><b data-bind="season"></b><span class="muted" data-bind="next"></span></div>
+      <div class="yearbar-track">
+        <div class="yearbar-months">
+          ${MONTHS.map(m => `<span class="season-${seasonOf(m).id}">${m}</span>`).join('')}
+        </div>
+        <i class="yearbar-elapsed" data-bar="yearPct"></i>
       </div>
     </div>
     <div class="status-money" data-tour="money">
@@ -30,16 +35,19 @@ export function render() {
 
 export const binds = {
   age: ({ state }) => `${ageOn(state.day)} 歲`,
-  date: ({ state }) => formatDate(state.day),
+  date: ({ state }) => formatDate(state.day, { weekday: false }),
+  season: ({ state }) => {
+    const s = seasonOf(calendarOf(state.day).month);
+    return `${s.icon} ${calendarOf(state.day).year} 年・${s.label}`;
+  },
+  next: ({ state }) => {
+    const n = upcoming(state);
+    return `下一件大事：${n.title}（${formatDate(n.day, { weekday: false }).slice(5)}）`;
+  },
+  yearPct: ({ state, progress }) => (yearProgress(state.day) + progress / 365) * 100,
   // 存款依今天已過的比例內插，數字才會持續跳動
   money: ({ state, progress }) => formatMoney(state.money + dailyWage(state) * progress),
-  wage: ({ state }) => `↑ ${formatNumber(dailyWage(state))}/日`,
-  clock: ({ state, progress }) => {
-    const t = timeOf(state, progress);
-    return `${t.icon} ${t.clock}`;
-  },
-  doing: ({ state, progress }) => timeOf(state, progress).part.label,
-  dayPct: ({ progress }) => progress * 100,
+  wage: ({ state }) => `月薪 ${formatNumber(state.job.salary)}`,
   energy: ({ state }) => Math.round(state.vitals.energy),
   energyPct: ({ state }) => (state.vitals.energy / state.vitals.energyMax) * 100,
   mood: ({ state }) => Math.round(state.vitals.mood),
@@ -47,16 +55,6 @@ export const binds = {
 };
 
 export const blocks = {
-  // 今天的時間軸：06:00 到隔天 06:00，每段寬度照時數；已經過去的部分由 dayPct 蓋上一層
-  dayparts: ({ state }) =>
-    partsOf(state)
-      .map(p => {
-        const width = ((p.to - p.from) / 24) * 100;
-        const cls = `daybar-part part-${p.activity ?? p.kind}`;
-        return `<span class="${cls}" style="width:${width}%" title="${p.from % 24}:00 ${p.label}">${p.short}</span>`;
-      })
-      .join(''),
-
   // 窄螢幕放不下 4 顆速度鍵：一顆暫停／繼續，一顆循環切換倍速
   speed: ({ state }) => {
     const { speed, lastSpeed = 1 } = state.settings;

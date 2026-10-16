@@ -1,11 +1,9 @@
-// 新人第一年事件包（DESIGN.md §10.3）：讓第一年每週都有事發生
+// 新人第一年事件包（DESIGN.md §10.3）：劇情分散在第一年，加上每年的節日，讓每一年都有事發生
 // 格式同 events.js；on.day 是開局後第幾天（只出現一次），on.month + on.date 是每年那天
 // cast 對應 cast.js 的固定班底，卡片上會顯示是誰
 
-const tenureUnderYear = s => s.day - s.job.startDay < 365;
-
 export const FIRST_YEAR_EVENTS = [
-  // ── 前兩個月：大約每週一個劇情事件 ──
+  // ── 第一年的劇情（日子錯開節日，避免卡片擠在一起） ──
   {
     id: 'welcome_dinner',
     on: { day: 1 },
@@ -24,7 +22,7 @@ export const FIRST_YEAR_EVENTS = [
   },
   {
     id: 'line_groups',
-    on: { day: 2 },
+    on: { day: 16 },
     cast: 'xiaomei',
     title: '被拉進 30 個群組',
     text: '一早打開手機，你已經被拉進 30 個 LINE 群組：部門群、專案群、訂便當群、福委會群……',
@@ -41,7 +39,7 @@ export const FIRST_YEAR_EVENTS = [
   },
   {
     id: 'excel_master',
-    on: { day: 6 },
+    on: { day: 63 },
     cast: 'boss',
     title: '「你 Excel 應該很會吧？」',
     text: '王經理丟來一個有 50 個分頁的 Excel：「年輕人，這個你應該很會吧？」',
@@ -52,7 +50,7 @@ export const FIRST_YEAR_EVENTS = [
   },
   {
     id: 'group_buy',
-    on: { day: 13 },
+    on: { day: 114 },
     cast: 'xiaomei',
     title: '小美的團購',
     text: '小美在群組貼了一個連結：「團購雞蛋糕！滿 10 份免運～」',
@@ -63,7 +61,7 @@ export const FIRST_YEAR_EVENTS = [
   },
   {
     id: 'akai_slacking',
-    on: { day: 20 },
+    on: { day: 147 },
     cast: 'akai',
     title: '阿凱的摸魚教學',
     text: '阿凱湊過來小聲說：「新人，教你怎麼看起來很忙。」',
@@ -74,18 +72,18 @@ export const FIRST_YEAR_EVENTS = [
   },
   {
     id: 'stay_tonight',
-    on: { day: 27 },
+    on: { day: 254 },
     cast: 'boss',
-    title: '「今晚可以留一下嗎？」',
-    text: '一進公司，王經理就走過來：「今晚可以留一下嗎？客戶臨時要改。」',
+    title: '「這週可以留晚一點嗎？」',
+    text: '王經理走過來：「客戶這週很急，大家每天留晚一點好嗎？」',
     choices: [
       {
         text: '留下來',
-        effects: { performance: 2, mood: -3 },
-        forceSlots: { activity: 'overtime', days: 1 },
-        result: '改到九點，王經理請你喝了一杯珍奶。',
+        effects: { performance: 3, mood: -3 },
+        forceSlots: { activity: 'overtime', weeks: 1, slots: [0, 1, 2, 3, 4] },
+        result: '連續加班一週，週五王經理請大家喝珍奶。',
       },
-      { text: '說今晚有約', effects: { performance: -1, mood: 2 }, result: '王經理：「好吧，那明天早點來。」', default: true },
+      { text: '說這週有事', effects: { performance: -1, mood: 2 }, result: '王經理：「好吧，那我找別人。」', default: true },
     ],
   },
   {
@@ -102,7 +100,7 @@ export const FIRST_YEAR_EVENTS = [
   },
   {
     id: 'weekly_report',
-    on: { day: 49 },
+    on: { day: 288 },
     cast: 'boss',
     title: '第一次寫週報',
     text: '王經理：「新人這週開始寫週報喔，格式照小美的。」',
@@ -113,10 +111,10 @@ export const FIRST_YEAR_EVENTS = [
   },
   {
     id: 'team_outing',
-    on: { day: 56 },
+    on: { day: 235 },
     cast: 'xiaomei',
     title: '部門出遊報名',
-    text: '福委會公告：下個月部門出遊去宜蘭，要自付 1,500 元。',
+    text: '福委會公告：春天部門出遊去宜蘭，要自付 1,500 元。',
     choices: [
       { text: '報名！', effects: { money: -1500, mood: 10 }, result: '小美興奮地說要準備桌遊。' },
       { text: '不去了', result: '那個週末可以好好睡一覺。', default: true },
@@ -125,8 +123,43 @@ export const FIRST_YEAR_EVENTS = [
 
   // ── 每年固定的日子 ──
   {
+    id: 'lunar_new_year',
+    on: { month: 2, date: 10 },
+    cast: 'mom',
+    title: '過年',
+    text: '過年回家，親戚圍著你問：「薪水多少？有沒有對象？」',
+    choices: [
+      { text: '包紅包給長輩', effects: { money: -6000, mood: 6 }, result: '長輩笑得合不攏嘴，問題就變少了。' },
+      { text: '老實回答薪水', effects: { mood: -6 }, result: '親戚們開始比較誰家小孩賺比較多……' },
+      { text: '默默吃年夜飯', effects: { mood: 2 }, result: '佛跳牆、雞湯、長年菜，吃到撐。', default: true },
+    ],
+  },
+  {
+    id: 'mothers_day',
+    on: { month: 5, date: 10 },
+    cast: 'mom',
+    title: '母親節',
+    text: '母親節到了，要怎麼表示一下？',
+    choices: [
+      { text: '訂餐廳帶媽媽吃飯', effects: { money: -3000, mood: 10 }, result: '媽媽嘴上說太貴，還是拍了很多照片。' },
+      { text: '回傳一張長輩圖', effects: { mood: 3 }, result: '媽媽回：「哈哈哈你也會傳這個」', default: true },
+    ],
+  },
+  {
+    id: 'dragon_boat',
+    on: { month: 6, date: 15 },
+    cast: 'xiaomei',
+    title: '端午節的粽子',
+    text: '小美帶了自己包的粽子來，還問：「你是北部粽派還是南部粽派？」',
+    choices: [
+      { text: '北部粽', effects: { mood: 3 }, result: '小美：「南部粽才是粽子！」辦公室吵了一下午。' },
+      { text: '南部粽', effects: { mood: 3 }, result: '阿凱：「北部粽才是油飯！」辦公室吵了一下午。' },
+      { text: '都好吃', effects: { mood: 4 }, result: '圓滑。小美多給了你一顆。', default: true },
+    ],
+  },
+  {
     id: 'aircon_war',
-    on: { month: 8, date: 12 },
+    on: { month: 8, date: 20 },
     cast: 'akai',
     title: '冷氣大戰',
     text: '辦公室冷氣 23 度，你冷到發抖，旁邊的阿凱還在喊熱。',
@@ -179,12 +212,10 @@ export const FIRST_YEAR_EVENTS = [
   },
   {
     id: 'probation_talk',
-    on: { month: 12, date: 15 },
-    once: true,
-    condition: tenureUnderYear,
+    on: { day: 150 }, // 排在第一次考核附近；被間隔擋住時會往後延，所以文字寫成「試用期結束」
     cast: 'hr',
     title: '試用期面談',
-    text: '人資小林找你面談：「試用期快結束了，你覺得這份工作怎麼樣？」',
+    text: '人資小林找你面談：「試用期差不多結束囉！這陣子你覺得這份工作怎麼樣？」',
     choices: [
       { text: '很喜歡，想好好發展', effects: { performance: 2, mood: -1 }, result: '小林點點頭：「王經理也說你表現不錯。」' },
       { text: '老實說有點累', effects: { mood: 4 }, result: '小林：「新人都會這樣，慢慢來。」', default: true },

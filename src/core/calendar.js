@@ -33,6 +33,16 @@ export function monthsBetween(fromDay, toDay) {
   return (b.year - a.year) * 12 + (b.month - a.month) - (b.date < a.date ? 1 : 0);
 }
 
+// 某年某月某日是開局後第幾天
+export const dayOfDate = (year, month, date) => Math.round((Date.UTC(year, month - 1, date) - START_UTC) / DAY_MS);
+
+// 今年已經過了多少（0～1），年度進度條用
+export function yearProgress(day) {
+  const { year } = calendarOf(day);
+  const start = dayOfDate(year, 1, 1);
+  return (day - start) / (dayOfDate(year + 1, 1, 1) - start);
+}
+
 export function daysUntil(fromDay, match) {
   let n = 1;
   while (!match(calendarOf(fromDay + n))) n++;

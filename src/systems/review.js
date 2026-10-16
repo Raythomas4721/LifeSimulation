@@ -1,5 +1,4 @@
-// 週日檢討與月結（DESIGN.md §5.4）
-import { PACING } from '../data/balance.js';
+// 年度回顧（DESIGN.md §5.4）：每年 12/31 結束時回顧這一年，順便調整明年的每週行程
 import { calendarOf } from '../core/calendar.js';
 import { closeCard, pushCard } from './cards.js';
 
@@ -16,23 +15,18 @@ export function startPeriod(state) {
     expenses: 0,
     overtimeSlots: 0,
     workDays: 0,
+    events: 0,
   };
 }
 
 // 在當天結算完、state.day 加 1 之前呼叫
 export function checkReview(state) {
-  const cal = calendarOf(state.day);
-  const weekly = state.flags.reviews < PACING.weeklyReviews;
-  const due = weekly
-    ? cal.weekday === 0
-    : calendarOf(state.day + 1).date === 1 && state.day - state.period.startDay + 1 >= PACING.minMonthlyDays;
-  if (!due) return;
+  if (calendarOf(state.day + 1).date !== 1 || calendarOf(state.day + 1).month !== 1) return;
   state.flags.reviews += 1;
   pushCard(state, {
     kind: 'review',
-    type: weekly ? 'weekly' : 'monthly',
-    number: state.flags.reviews,
-    month: cal.month,
+    type: 'yearly',
+    year: calendarOf(state.day).year,
     report: buildReport(state),
   });
 }
@@ -60,5 +54,8 @@ function buildReport(state) {
     perfGain: state.job.performance - p.performance,
     perfPerWorkday: p.workDays ? (state.job.performance - p.performance) / p.workDays : 0,
     overtimeSlots: p.overtimeSlots,
+    events: p.events ?? 0,
+    collapses: state.health.collapses,
+    sickDays: state.health.sickDays,
   };
 }

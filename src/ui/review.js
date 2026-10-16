@@ -1,4 +1,4 @@
-// 週日檢討與月結的卡片內容（DESIGN.md §5.4），外框由 cards.js 負責
+// 年度回顧的卡片內容（DESIGN.md §5.4），外框由 cards.js 負責
 import { BOSS, BOSS_COMMENTS } from '../data/reviews.js';
 import { SCHEDULE_PRESETS, SLOT_SHORT } from '../data/schedule.js';
 import { formatDate, formatMoney, formatSigned } from './format.js';
@@ -12,7 +12,8 @@ export function resetDraft() {
 
 export function reviewCard(p) {
   const r = p.report;
-  const title = p.type === 'weekly' ? `第 ${p.number} 週結束了` : `${p.month} 月結束了`;
+  // 舊存檔裡可能還留著週檢討或月結的卡片
+  const title = p.type === 'yearly' ? `${p.year} 年度回顧` : p.type === 'weekly' ? `第 ${p.number} 週結束了` : `${p.month} 月結束了`;
   const comment = BOSS_COMMENTS.find(c => c.when(r)).text;
   const range = `${formatDate(r.startDay, { weekday: false })} ～ ${formatDate(r.endDay, { weekday: false })}`;
   return `
@@ -27,9 +28,12 @@ export function reviewCard(p) {
           <dt>心情</dt><dd>${Math.round(r.moodStart)} → ${Math.round(r.moodEnd)}</dd>
           <dt>工作表現</dt><dd>${formatSigned(r.perfGain, 1)}</dd>
           <dt>加班</dt><dd>${r.overtimeSlots} 次</dd>
+          ${r.events != null ? `<dt>遇到的事</dt><dd>${r.events} 件</dd>` : ''}
+          ${r.collapses ? `<dt>病倒</dt><dd>${r.collapses} 次</dd>` : ''}
+          ${r.sickDays ? `<dt>病假</dt><dd>${r.sickDays} 天</dd>` : ''}
         </dl>
         <p class="speech"><b>${BOSS}：</b>「${comment}」</p>
-        <h3>接下來怎麼安排？</h3>
+        <h3>明年的每週行程</h3>
         ${draft ? editor(draft) : presets()}`;
 }
 

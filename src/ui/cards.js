@@ -1,4 +1,4 @@
-// 從下方滑出的卡片：檢討與月結、事件、通知。state.pending 有值時顯示，時間暫停
+// 從下方滑出的卡片：檢討與月結、事件、通知、你不在的時候。state.pending 有值時顯示，時間暫停
 import { EVENTS_BY_ID } from '../data/events.js';
 import { CAST_BY_ID } from '../data/cast.js';
 import { NOTICES } from '../data/notices.js';
@@ -15,7 +15,11 @@ export const blocks = {
     const p = state.pending;
     if (p?.kind !== 'review') review.resetDraft();
     if (!p) return '';
-    const inner = p.kind === 'review' ? review.reviewCard(p) : p.kind === 'event' ? eventCard(p) : noticeCard(p, state);
+    const inner =
+      p.kind === 'review' ? review.reviewCard(p)
+      : p.kind === 'event' ? eventCard(p)
+      : p.kind === 'away' ? awayCard(p)
+      : noticeCard(p, state);
     // data-card 讓每張新卡片的 HTML 都不同，滑出動畫才會重播
     return `
       <div class="sheet-backdrop">
@@ -70,6 +74,48 @@ function noticeCard(p, state) {
     <div class="speech">${lines.map(l => `<p>${l}</p>`).join('')}</div>
     ${salary || p.deltas ? `<ul class="changes">${salary}${deltaItems(p.deltas).map(t => `<li>${t}</li>`).join('')}</ul>` : ''}
     ${buttons}`;
+}
+
+// 你不在的時候（§5.3）：離開多久、過了幾天、數值怎麼變、發生了哪些事
+function awayCard(p) {
+  const { from, to } = p;
+  const span = p.days >= 60 ? `（約 ${Math.round(p.days / 30)} 個月）` : p.days >= 14 ? `（約 ${Math.round(p.days / 7)} 週）` : '';
+  const rows = [
+    ['存款', `${formatMoney(from.money)} → ${formatMoney(to.money)}`],
+    ['體力', `${Math.round(from.energy)} → ${Math.round(to.energy)}`],
+    ['心情', `${Math.round(from.mood)} → ${Math.round(to.mood)}`],
+    ['工作表現', `${Math.floor(from.performance)} → ${Math.floor(to.performance)}`],
+  ];
+  const items = p.happened.slice(-12).map(awayItem);
+  if (p.happened.length > 12) items.unshift(`……還有 ${p.happened.length - 12} 件比較早的事`);
+  if (p.reviews) items.push(`📋 檢討 ${p.reviews} 次，行程都照舊`);
+  return `
+    <h2 id="card-title">🌙 你不在的時候</h2>
+    <p class="muted">你離開了 ${formatDuration(p.awayMs)}，時間過了 ${p.days} 天${span}${p.capped ? '；離開再久，最多也只推進 1 年' : ''}。</p>
+    <dl class="kv">${rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>
+    <h3>發生了這些事</h3>
+    ${items.length ? `<ul class="changes">${items.map(t => `<li>${t}</li>`).join('')}</ul>` : '<p class="muted">平平淡淡，什麼事都沒發生。</p>'}
+    ${p.stopped ? '<p class="note">有件事要你決定，時間先停在這裡。</p>' : ''}
+    <button class="btn btn-block btn-primary" data-action="cardClose">${p.stopped ? '看看是什麼事' : '好'}</button>`;
+}
+
+function awayItem(h) {
+  if (h.kind === 'event') {
+    const e = EVENTS_BY_ID[h.id];
+    return `${esc(e.title)}：${esc(e.choices[h.choice].text)}${h.text ? `——${esc(h.text)}` : ''}`;
+  }
+  const n = NOTICES[h.id];
+  const money = h.deltas?.money ? `（${deltaItems({ money: h.deltas.money }).join('')}）` : '';
+  const grade = h.id === 'review' ? `：${h.data.grade}` : '';
+  return `${n.title(h.data ?? {})}${grade}${money}`;
+}
+
+function formatDuration(ms) {
+  const minutes = Math.round(ms / 60_000);
+  if (minutes < 60) return `${Math.max(1, minutes)} 分鐘`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} 小時${minutes % 60 ? ` ${minutes % 60} 分` : ''}`;
+  return `${Math.floor(hours / 24)} 天${hours % 24 ? ` ${hours % 24} 小時` : ''}`;
 }
 
 // 升遷抉擇的效果說明，照目前月薪與職級算

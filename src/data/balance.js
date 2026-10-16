@@ -1,7 +1,8 @@
 // 所有數值平衡常數（DESIGN.md §5、§6.2、§11）。調整後先跑 node tools/simulate.js
 
+// 以年為節奏（§5.1）：1 天 0.4 秒、1 年約 2.4 分鐘，22～65 歲約 1 小時 45 分（×1，不含看卡片的時間）
 export const TIME = {
-  msPerDay: 10_000,
+  msPerDay: 400,
   speeds: [0, 1, 2, 4],
   debugSpeed: 100,
 };
@@ -57,11 +58,14 @@ export const REVIEW = {
 };
 
 export const BONUS = {
-  months: { A: 2, B: 1.5, C: 1, D: 0.5 }, // 1/20 依當年 1/1 的考核發放（§7.4）
+  months: { A: 2, B: 1.5, C: 1, D: 0.5 }, // 1/1 考核時一起發放（§7.4）
 };
 
 export const EVENTS = {
-  dailyChance: 1 / 14, // 平均每 2 週約 1 個事件（§10.2）
+  minGapDays: 38, // 兩個事件之間至少隔幾天（約 15 秒），讓事件間隔落在 15～30 秒（§10.2）
+  holidayWindowDays: 14, // 節日可以延後幾天出現；延後還排不進去就跳過那一年
+  holidayCooldownDays: 700, // 同一個節日至少隔快兩年才再出現
+  dailyChance: 1 / 12, // 空檔夠長時，隨機事件每天出現的機率
   cooldownDays: 180,
   weight: 10,
 };
@@ -81,9 +85,9 @@ export const HEALTH = {
   sickPayRate: 0.5,
 };
 
-export const PACING = {
-  weeklyReviews: 4, // 前幾週每週日檢討，之後改成每月最後一天月結（§5.4）
-  minMonthlyDays: 14, // 月結距離上次檢討太近就併到下個月
+export const OFFLINE = {
+  maxDays: 365, // 離線最多推進 1 遊戲年，約 2.4 分鐘的離開時間（§5.3）
+  minSummaryDays: 30, // 推進不到一個月又沒發生事情時不跳摘要
 };
 
 export const SAVE = {
