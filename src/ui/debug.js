@@ -48,6 +48,11 @@ export function mountDebug(ctl, tabbar) {
       </div>
       <label class="debug-check"><input type="checkbox" id="debug-auto"${autoCards ? ' checked' : ''}> 跳轉時自動處理途中的卡片（照預設選項）</label>
       <div class="debug-row">
+        <button class="btn" data-debug="away" data-ms="300000">離開 5 分鐘</button>
+        <button class="btn" data-debug="away" data-ms="3600000">離開 1 小時</button>
+        <button class="btn" data-debug="away" data-ms="86400000">離開 1 天</button>
+      </div>
+      <div class="debug-row">
         <label class="debug-seed">觸發事件<select class="input" id="debug-event">${EVENT_LIST.map(e => `<option value="${e.id}">${e.title}</option>`).join('')}</select></label>
         <button class="btn" data-debug="trigger">觸發</button>
       </div>
@@ -74,6 +79,7 @@ export function mountDebug(ctl, tabbar) {
       case 'nextMonth': ctl.advanceDays(daysUntil(day, c => c.date === 1), autoCards); break;
       case 'nextYear': ctl.advanceDays(daysUntil(day, c => c.month === 1 && c.date === 1), autoCards); break;
       case 'trigger': ctl.triggerEvent(panel.querySelector('#debug-event').value); break;
+      case 'away': ctl.simulateAway(Number(btn.dataset.ms)); break;
       case 'applyStats':
         for (const f of STAT_FIELDS) {
           const v = Number(panel.querySelector(`[data-stat="${f.key}"]`).value);

@@ -99,6 +99,32 @@ export function readSave() {
   }
 }
 
+// 存檔碼（§14.4）：「LS1:」加上存檔 JSON 的 UTF-8 base64，用來換手機或備份
+const CODE_PREFIX = 'LS1:';
+
+export function encodeSaveCode(save) {
+  const bytes = new TextEncoder().encode(JSON.stringify(save));
+  let binary = '';
+  for (const b of bytes) binary += String.fromCharCode(b);
+  return CODE_PREFIX + btoa(binary);
+}
+
+// 失敗時丟出可以直接顯示給玩家的錯誤訊息
+export function decodeSaveCode(code) {
+  const text = String(code).replace(/\s+/g, '');
+  if (!text.startsWith(CODE_PREFIX)) throw new Error('這不是上班模擬器的存檔碼，請確認有從「LS1:」開始整段複製。');
+  let save;
+  try {
+    const binary = atob(text.slice(CODE_PREFIX.length));
+    save = JSON.parse(new TextDecoder().decode(Uint8Array.from(binary, c => c.charCodeAt(0))));
+  } catch {
+    throw new Error('存檔碼不完整，請確認有整段複製。');
+  }
+  if (Number.isInteger(save?.version) && save.version > SAVE_VERSION) throw new Error('這個存檔碼來自比較新的版本，請先更新遊戲。');
+  if (!isValid(save)) throw new Error('存檔碼的內容不正確。');
+  return migrate(save);
+}
+
 export function clearSave() {
   try {
     localStorage.removeItem(KEY);

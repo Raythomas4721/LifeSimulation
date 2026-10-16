@@ -430,3 +430,9 @@ h3 { margin: 16px 0 8px; font-size: 16px; }
 .cast-list li { display: flex; gap: 10px; padding: 8px 0; border-bottom: 1px dashed var(--muted); }
 .cast-list li:last-child { border-bottom: 0; }
 .cast-emoji { font-size: 28px; line-height: 1.2; }
+
+/* 存檔碼 */
+.input.code { min-height: 96px; margin-top: 12px; font-family: ui-monospace, monospace; font-size: 12px; word-break: break-all; resize: vertical; }
+.start .input.code { text-align: left; }
+.error { margin-top: 8px; color: var(--danger); font-weight: 700; }
+.error:empty { display: none; }

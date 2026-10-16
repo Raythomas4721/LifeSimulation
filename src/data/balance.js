@@ -81,6 +81,10 @@ export const HEALTH = {
   sickPayRate: 0.5,
 };
 
+export const OFFLINE = {
+  maxDays: 84, // 離線最多推進 12 遊戲週（§5.3）
+};
+
 export const PACING = {
   weeklyReviews: 4, // 前幾週每週日檢討，之後改成每月最後一天月結（§5.4）
   minMonthlyDays: 14, // 月結距離上次檢討太近就併到下個月

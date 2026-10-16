@@ -6,12 +6,13 @@ import { createRng, randomSeed } from './core/rng.js';
 import { createLoop } from './core/loop.js';
 import { advanceDay } from './core/advance.js';
 import { calendarOf, slotIndex } from './core/calendar.js';
-import { clearSave, readSave, toSave, writeSave } from './core/save.js';
+import { clearSave, decodeSaveCode, encodeSaveCode, readSave, toSave, writeSave } from './core/save.js';
 import { clampVitals } from './systems/work.js';
 import { resolveReview } from './systems/review.js';
 import { closeCard } from './systems/cards.js';
 import { chooseEvent, triggerEvent } from './systems/events.js';
 import { autoResolve } from './systems/auto.js';
+import { runOffline } from './systems/offline.js';
 import { acceptPromotion, declinePromotion } from './systems/annual.js';
 import { mountApp } from './ui/app.js';
 import { runStartFlow } from './ui/start.js';
@@ -105,6 +106,21 @@ const ctl = {
     clearSave();
     boot();
   },
+  // 匯出、匯入存檔碼（§14.4）；匯入會換掉整局，所以延到這次點擊處理完再做
+  exportCode: () => encodeSaveCode(toSave(game, Date.now())),
+  importCode(code) {
+    const imported = decodeSaveCode(code);
+    setTimeout(() => {
+      endSession();
+      writeSave(imported);
+      startSession({ state: imported.state, seed: imported.seed, rng: createRng(imported.rng) }, Date.now() - imported.savedAt);
+    });
+  },
+  // 除錯：假裝離開了一段時間
+  simulateAway(ms) {
+    catchUp(ms);
+    session.ui.refresh();
+  },
   newGameWithSeed(seed) {
     const name = game.state.player.name;
     endSession();
@@ -129,17 +145,28 @@ function save() {
   if (!ctl.saveFailed) ctl.lastSavedAt = now;
 }
 
+// 離線推進（§5.3）：教學沒走完或玩家按了暫停時不推進
+function catchUp(awayMs) {
+  if (!game.state.flags.tutorialDone || game.state.settings.speed === 0) return;
+  if (runOffline(game.state, game.rng, awayMs)) save();
+}
+
+// 切到背景時存檔並停止計時；切回來時把離開的時間當成離線推進
 function onVisibility() {
-  // 離線推進在 M3；目前切到背景時先存檔並暫停
   if (document.hidden) {
     save();
+    session.hiddenAt = Date.now();
     session.loop.stop();
   } else {
+    if (session.hiddenAt) catchUp(Date.now() - session.hiddenAt);
+    session.hiddenAt = null;
     session.loop.start();
+    session.ui.refresh();
   }
 }
 
-function startSession(g) {
+// awayMs：上次存檔到現在過了多久，用來做離線推進
+function startSession(g, awayMs = 0) {
   game = g;
   const loop = createLoop({
     msPerDay: TIME.msPerDay,
@@ -158,6 +185,8 @@ function startSession(g) {
     });
     session.tutorial.start();
   }
+  catchUp(awayMs);
+  session.ui.refresh();
   session.autosave = setInterval(save, SAVE.autosaveMs);
   document.addEventListener('visibilitychange', onVisibility);
   window.addEventListener('pagehide', save);
@@ -182,7 +211,8 @@ async function boot() {
   const saved = readSave();
   const choice = await runStartFlow(root, { save: saved });
   if (choice.action === 'continue') {
-    startSession({ state: saved.state, seed: saved.seed, rng: createRng(saved.rng) });
+    const s = choice.save ?? saved; // 從標題畫面匯入存檔碼時會帶 save
+    startSession({ state: s.state, seed: s.seed, rng: createRng(s.rng) }, Date.now() - s.savedAt);
   } else {
     startSession(newGame(choice.name));
   }
